@@ -29,7 +29,7 @@
                     <div class="portlet">
                         <div class="portlet-title">
                             <div class="caption">
-                                <i class="icon-grid"></i>Head Details
+                                <i class="icon-grid"></i>Head Lists
                             </div>
                             <?php
                                 $user = $this->ion_auth_admin->user()->row();
@@ -62,14 +62,6 @@
                             <tr role="row" class="heading">
                                 <th width="5%">Head Name</th>
                                 <th width="5%">Member</th>
-                                <th width="5%">Total Income</th>
-                                <th width="5%">CD Balance</th>
-                                <th width="5%">Account Status</th>
-                                <th width="5%">Is Blocked?</th>
-                                <th width="5%">Is Paylite?</th>
-                                <th width="5%">Knight Status</th>
-                                <th width="5%">Paid AR</th>
-                                <th width="5%">Knight AR</th>
                                 <th width="5%">Date Created</th>
                                 <th width="10%">Actions</th>
                             </tr>
@@ -79,36 +71,6 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control form-filter input-sm" name="filter[both][member_name]">
-                                </td>
-                                <td></td>
-                                <td></td>
-                                <td>
-                                    <select name="filter[both][account_status]" class="form-control form-filter input-sm">
-                                        <option value=""></option>
-                                        <option value="1">Paid</option>
-                                        <option value="0">CD</option>
-                                    </select>
-                                </td>
-                                <td></td>
-                                <td>
-                                    <select name="filter[both][is_paylite]" class="form-control form-filter input-sm">
-                                        <option value=""></option>
-                                        <option value="1">Yes</option>
-                                        <option value="0">No</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select name="filter[both][knight_status]" class="form-control form-filter input-sm">
-                                        <option value=""></option>
-                                        <option value="1">Activated</option>
-                                        <option value="0">Not Activated</option>
-                                    </select>                                    
-                                </td>
-                                <td>
-                                    <input type="text" class="form-control form-filter input-sm" name="filter[both][paid_ar]">
-                                </td>
-                                <td>
-                                    <input type="text" class="form-control form-filter input-sm" name="filter[both][knight_ar]">
                                 </td>
                                 <td></td>
                                 <td>

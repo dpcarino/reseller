@@ -57,6 +57,7 @@ class Codes extends CI_Controller {
             $data['packages'] = $packages;
 
             $this->form_validation->set_rules('member_account', 'Member Account', 'trim|required|callback_verify_member_account');
+            #$this->form_validation->set_rules('package', 'Package', 'trim|required|callback_verify_package_codes_count'); //for max 30
             $this->form_validation->set_rules('package', 'Package', 'trim|required');
             $this->form_validation->set_rules('code_quantity', 'Code Quantity', 'trim|required|numeric');
             $this->form_validation->set_rules('purchase_no', 'Purchase Number', 'trim|required|numeric');
@@ -339,6 +340,27 @@ class Codes extends CI_Controller {
                 $this->output->set_content_type('application/json')->set_output(json_encode($data));
 
             break;
+
+            case 'check-member-reseller-code':
+
+                $member_id = xss_clean($this->input->post('member_id'));
+
+                $codes = $this->Codes_model->get_unused_reseller_codes_by_member($member_id);
+
+                $codes_cnt = count($codes);
+
+                if($codes_cnt >= 30){
+                    $data['status'] = 'success';
+                    $data['msg'] = 'This member already exceeded maximum allowed reseller code';   
+                }else{
+                    $codes_togenerate = $codes_cnt - 30;
+
+                    $data['status'] = 'success';
+                    $data['msg'] = 'You can generate ' .abs($codes_togenerate). ' reseller codes for this member'; 
+                }        
+
+                $this->output->set_content_type('application/json')->set_output(json_encode($data));
+            break;
 		}
 	}
 
@@ -359,4 +381,41 @@ class Codes extends CI_Controller {
         }
 
     }
+
+    public function verify_package_codes_count(){
+
+        $member_id = xss_clean($this->input->post('member_id'));
+        $package_id = xss_clean($this->input->post('package'));
+        $quantity = xss_clean($this->input->post('code_quantity'));
+
+        if($package_id == 9){
+            
+            if($quantity > 30){
+                $this->form_validation->set_message('verify_package_codes_count', 'You can only generate maximum of 30 Reseller Package');
+                return false;
+            }else{
+                $codes = $this->Codes_model->get_unused_reseller_codes_by_member($member_id);
+
+                $codes_cnt = count($codes);
+
+                $codes_togenerate = $codes_cnt - $quantity;
+
+                #error_log(print_r($codes_togenerate, true), 0);
+
+                //unfinished need to check negative number if codes generated less than allowed 30
+
+                if($codes_togenerate <= 30){
+                    return false;
+                }else{
+                    $this->form_validation->set_message('verify_package_codes_count', 'This member already exceeded maximum allowed reseller code');
+                    return false;                
+                }
+            }
+
+
+        }else{
+            return true;
+        }
+
+    }    
 }

@@ -27,6 +27,7 @@ class Member extends CI_Controller {
         $this->load->model('System_model');
         $this->load->model('Encashment_model');
         $this->load->model('Packages_model');
+        $this->load->model('Reseller_model');
     }
 
 	public function index(){
@@ -288,6 +289,16 @@ class Member extends CI_Controller {
                     $data['cd_codes_count'] = count($cd_codes);
                     $data['memberhead_info'] = $memberhead_info;
                     $data['member_star_wallet_info'] = $member_star_wallet_info;
+					
+					#buboy 2019-04-26
+					#Add member codes summary to dashboard
+					$available_codes = $this->Members_model->get_available_codes_count($member_id);
+					$data['available_codes'] = $available_codes;
+					
+					#buboy 2019-04-26
+					#for leaderboards
+					$leaderboards = $this->Members_model->get_leaderboards();
+					$data['leaderboards'] = $leaderboards;
 
             		$this->load->view('member-home-tpl', $data);
             	}
@@ -568,6 +579,19 @@ class Member extends CI_Controller {
                         
                         $new_head_id = $this->Heads_model->insert_head($head_data);
 
+                        if($package_id == 9){ //reseller
+                            $reseller_data['head_id'] = $new_head_id;
+                            $reseller_data['gc_available'] = 1;
+                            $reseller_data['is_reseller'] = 1;
+
+                            $this->Reseller_model->insert_reseller($reseller_data);
+                        }else{
+                            
+                            $reseller_data['head_id'] = $new_head_id;
+
+                            $this->Reseller_model->insert_reseller($reseller_data);
+                        }
+
                         #insert to gold count
                         $gold_data['head_id'] = $new_head_id;
 
@@ -584,7 +608,12 @@ class Member extends CI_Controller {
 
                         }elseif($code_type == 1){
 
-                            $result_addSponsor = $this->Members_model->execGoldAddSponsor($sponsor_id);
+                            if($package_id == 9){
+                                $result_addSponsor = $this->Reseller_model->execResellerAddSponsor($sponsor_id);
+                            }else{
+                                $result_addSponsor = $this->Members_model->execGoldAddSponsor($sponsor_id);
+                            }
+
                         }
 
 
@@ -594,7 +623,14 @@ class Member extends CI_Controller {
 
                         }elseif($code_type == 1){
 
-                            $result_awardGSC = $this->Members_model->execGoldAwardGSC($new_head_id);
+                            if($package_id == 9){
+                                // error_log(print_r('execResellerAwardGSC', true), 0);
+                                $result_awardGSC = $this->Reseller_model->execResellerAwardGSC($new_head_id);
+                            }else{
+                                // error_log(print_r('execGoldAwardGSC', true), 0);
+                                // error_log(print_r($new_head_id, true), 0);
+                                $result_awardGSC = $this->Members_model->execGoldAwardGSC($new_head_id);
+                            }
                         }   
 
                         $printed_message['type'] = 'success';
@@ -934,12 +970,26 @@ class Member extends CI_Controller {
                         }
 
 
-                        $new_head_id = $this->Heads_model->insert_head($head_data);
+                        $new_head_id = $this->Heads_model->insert_head($head_data);                        
+                        
+                        if($package_id == 9){ //reseller
+                            $reseller_data['head_id'] = $new_head_id;
+                            $reseller_data['gc_available'] = 1;
+                            $reseller_data['is_reseller'] = 1;
+
+                            $this->Reseller_model->insert_reseller($reseller_data);
+
+                        }else{
+
+                            $reseller_data['head_id'] = $new_head_id;
+
+                            $this->Reseller_model->insert_reseller($reseller_data);
+                        }
 
                         #insert to gold count
                         $gold_data['head_id'] = $new_head_id;
 
-                        $this->Heads_model->insert_gold_count($gold_data);                
+                        $this->Heads_model->insert_gold_count($gold_data);
 
                         if($code_type == 0){
 
@@ -951,7 +1001,11 @@ class Member extends CI_Controller {
 
                         }elseif($code_type == 1){
 
-                            $result_addSponsor = $this->Members_model->execGoldAddSponsor($memberhead_info->head_id);
+                            if($package_id == 9){
+                                $result_addSponsor = $this->Reseller_model->execResellerAddSponsor($memberhead_info->head_id);
+                            }else{
+                                $result_addSponsor = $this->Members_model->execGoldAddSponsor($memberhead_info->head_id);
+                            }
                         }
 
 
@@ -961,7 +1015,11 @@ class Member extends CI_Controller {
 
                         }elseif($code_type == 1){
 
-                            $result_awardGSC = $this->Members_model->execGoldAwardGSC($new_head_id);
+                            if($package_id == 9){
+                                $result_awardGSC = $this->Reseller_model->execResellerAwardGSC($new_head_id);
+                            }else{
+                                $result_awardGSC = $this->Members_model->execGoldAwardGSC($new_head_id);
+                            }    
                         }                    
 
                         #send activation email
@@ -970,7 +1028,7 @@ class Member extends CI_Controller {
                             sendPayliteActivationEmail($new_member_id, $username, $password);
                         }else{
                             sendActivationEmail($new_member_id, $username, $password);
-                        }                                                
+                        }
                         #end sending email
 
                         $printed_message['type'] = 'success';

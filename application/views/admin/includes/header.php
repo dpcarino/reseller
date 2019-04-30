@@ -49,9 +49,11 @@ License: You must have a valid license purchased only from themeforest(the above
     <link href="<?php echo base_url('assets/layouts/layout/css/custom.min.css'); ?>" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url('assets/layouts/layout/css/extend.css'); ?>" rel="stylesheet" type="text/css" />
     <!-- END THEME LAYOUT STYLES -->
-    <link rel="shortcut icon" href="favicon.ico" /> </head>
+    <link rel="shortcut icon" href="<?php echo base_url('assets/global/favicon.ico'); ?>" />
 
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+</head>
 <!-- END HEAD -->
 
 <!--body class="page-header-fixed page-sidebar-closed-hide-logo page-content-white"-->

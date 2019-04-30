@@ -49,33 +49,33 @@
                 <div class="portlet-body">
                     <div class="table-container">
                         <table class="table table-striped table-bordered table-hover" id="datatable_admins">
-                        <thead>
-                        <tr role="row" class="heading">
-                            <th width="20%">Head</th>
-                            <th width="8%">Total Income</th>
-                            <th width="15%">
-                                 Actions
-                            </th>
-                        </tr>
-                        <tr role="row" class="filter">
-                            <td>
-                                <input type="text" class="form-control form-filter input-sm" name="filter[both][headname]">
-                            </td>
-                            <td></td>     
-                            <td>
-                                <div class="margin-bottom-5">
-                                    <button class="btn btn-sm yellow filter-submit margin-bottom"><i class="fa fa-search"></i> Search</button>
-                                    <button class="btn btn-sm red filter-cancel"><i class="fa fa-times"></i> Reset</button>
-                                </div>
-                            </td>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                            <thead>
+                            <tr role="row" class="heading">
+                                <th width="20%">Head</th>
+                                <th width="8%">Total Income</th>
+                                <th width="15%">
+                                     Actions
+                                </th>
+                            </tr>
+                            <tr role="row" class="filter">
+                                <td>
+                                    <input type="text" class="form-control form-filter input-sm" name="filter[both][headname]">
+                                </td>
+                                <td></td>     
+                                <td>
+                                    <div class="margin-bottom-5">
+                                        <button class="btn btn-sm yellow filter-submit margin-bottom"><i class="fa fa-search"></i> Search</button>
+                                        <button class="btn btn-sm red filter-cancel"><i class="fa fa-times"></i> Reset</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>    
 	</div>
 	<!-- END CONTENT BODY -->
@@ -102,6 +102,27 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="cancel-reseller-gc-release" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id='cancel-type'>Warning!</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-left" id="cancel-msg">Are you sure you want to claim your reseller voucher?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default blue" data-dismiss="modal" id="cancel-reseller-gc-yes">Yes</button>
+        <button type="button" class="btn btn-default red" data-dismiss="modal" id="cancel-reseller-gc-no">No</button>
+        <input type="hidden" id="input-head-id-gc-release" value="">
+      </div>      
+    </div>
+  </div>
+</div>
 <script>
 function moveToWallet(head_id){
     $('#cancel').modal('show');
@@ -120,6 +141,31 @@ $("#cancel-yes").on('click', function (){
         success: function(data) {           
             if(data.status == 'success'){
                 window.location.href = base_url+'transactions/move-to-wallet/';
+            }                
+        },
+        type: 'POST',
+    });
+
+});
+
+// Buboy April 24, 2019
+// Add GC Release Button
+function resellerGCRelease(head_id){
+    $('#cancel-reseller-gc-release').modal('show');
+    $('#input-head-id-gc-release').val(head_id);
+}
+
+$("#cancel-reseller-gc-yes").on('click', function (){
+   
+    var input_head_id = $('#input-head-id-gc-release').val();
+    var head_id = $('#reseller-gc-release-'+input_head_id).data('head_id');
+
+    $.ajax({//transactions/move-to-wallet/
+        url: base_url+"transactions/ajax/set-wallet-head",
+        data:{'head_id' : head_id},
+        success: function(data) {           
+            if(data.status == 'success'){
+                window.location.href = base_url+'transactions/claim-reseller-voucher/';
             }                
         },
         type: 'POST',

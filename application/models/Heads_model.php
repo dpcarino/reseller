@@ -18,8 +18,10 @@ class Heads_model extends CI_Model
         
         $this->db->where('member_id', $member_id);
 
-
-        $result = $this->db->get('heads')->result();
+		##buboy April 23 2019
+		##change into wallet_info
+        ##$result = $this->db->get('heads')->result();
+		$result = $this->db->get('wallet_info')->result();
         
         return $result;
     }

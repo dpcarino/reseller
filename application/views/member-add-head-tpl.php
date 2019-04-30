@@ -216,10 +216,7 @@ function isNumberKey(evt){
 }
 
 $( function() {
-	$('.datepicker').datepicker({
-		format: 'yyyy-mm-dd',
-        endDate: '+0d',
-	});
+    $('#upline_placement_position').select2();
 });
 
 $("#package_id").change(function() {

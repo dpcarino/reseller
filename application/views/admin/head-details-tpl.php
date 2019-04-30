@@ -56,7 +56,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>                           
+                            </div>                            
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="portlet light bordered">
@@ -66,7 +66,7 @@
                                                 <span class="caption-subject bold font-yellow-casablanca uppercase"> Head Information</span>
                                             </div>
                                         </div>
-                                        <div class="portlet-body">
+                                        <div class="portlet-body">                                            
                                             <div class="table-container">
                                                 <table class="table table-striped table-bordered table-hover" id="datatable_admins">
                                                 <thead>
@@ -102,7 +102,89 @@
                                                 <tbody>
                                                 </tbody>
                                                 </table>
-                                            </div> 
+                                            </div>
+                                            <div class="portlet-title">
+                                                <div class="caption">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    <span class="caption-subject bold font-yellow-casablanca uppercase"> Head Breakdown</span>
+                                                </div>
+                                            </div>
+                                            <br>                                              
+                                            <div class="table-container">
+                                                <table class="table table-striped table-bordered table-hover" id="datatable_admins">
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Head Created On</td>
+                                                        <td><?php echo $head_info->created_on;  ?></td>
+                                                    </tr>                                                    
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Account Status</td>
+                                                        <td><?php echo ($head_info->account_status == 1 ? 'PAID':'CD');  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Is Blocked?</td>
+                                                        <td><?php echo ($head_info->status == 1 ? 'YES':'NO');  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Is Paylite?</td>
+                                                        <td><?php echo ($head_info->is_paylite == 1 ? 'YES':'NO');  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Paid AR</td>
+                                                        <td><?php echo ($head_info->paid_ar == '' ? 'N/A':$head_info->paid_ar);  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Knight AR</td>
+                                                        <td><?php echo ($head_info->knight_ar == '' ? 'N/A':$head_info->knight_ar);  ?></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="portlet-title">
+                                                <div class="caption">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    <span class="caption-subject bold font-yellow-casablanca uppercase"> Reseller Information</span>
+                                                </div>
+                                            </div>
+                                            <br>                                          
+                                            <div class="table-container">
+                                                <table class="table table-striped table-bordered table-hover" id="datatable_admins">
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Reseller</td>
+                                                        <td><?php echo ($reseller_info->is_reseller == 1 ? 'YES':'NO');  ?></td>
+                                                    </tr>                                                     
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Directs</td>
+                                                        <td><?php echo $reseller_info->reseller_direct_count;  ?></td>
+                                                    </tr>                                                    
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Referral Bonus</td>
+                                                        <td><?php echo $reseller_info->reseller_referrall_bonus;  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Left Count</td>
+                                                        <td><?php echo $reseller_info->reseller_l_count;  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Right Count</td>
+                                                        <td><?php echo $reseller_info->reseller_r_count;  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Voucher Claimed?</td>
+                                                        <td><?php echo ($reseller_info->gc_available == 1 ? 'NO':'YES');  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Reseller Upgraded?</td>
+                                                        <td><?php echo ($reseller_info->gold_updated == 1 ? 'YES':'NO');  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Reseller Date Upgraded?</td>
+                                                        <td><?php echo $reseller_info->gold_date;  ?></td>
+                                                    </tr>
+                                                    <tr role="row" class="heading">
+                                                        <td width="10%">Reseller AR</td>
+                                                        <td><?php echo ($reseller_info->reseller_ar == 0 ? 'N/A':$reseller_info->reseller_ar);  ?></td>
+                                                    </tr>                                                    
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -97,15 +97,14 @@
                 <span class="arrow open"></span>
             </a>          
         </li>
-
         <?php if($user->group_id == 1): ?>
         <li class="heading">
             <h3 class="uppercase">Process</h3>
         </li>
-        <li class="nav-item  <?php echo ($this->uri->uri_string() == 'admin/encashments' || $this->uri->uri_string() == 'admin/encashment/payouts' || $this->uri->uri_string() == 'admin/rewards' || $this->uri->uri_string() == 'admin/rewards/claims' ? 'start active open' : ''); ?>">
+        <li class="nav-item  <?php echo ($this->uri->uri_string() == 'admin/encashments' || $this->uri->uri_string() == 'admin/rewards' ? 'start active open' : ''); ?>">
             <a href="javascript:;" class="nav-link nav-toggle">
                 <i class="icon-book-open"></i>
-                <span class="title">Encashments & Rewards</span>
+                <span class="title">Claims</span>
                 <span class="selected"></span>
                 <span class="arrow open"></span>
             </a>
@@ -113,29 +112,51 @@
                 <li class="nav-item">
                     <a href="<?php echo site_url('admin/encashments'); ?>" class="nav-link ">
                         <i class="icon-basket"></i>
-                        <span class="title">Encashment Request</span>
-                    </a>
-                </li>
-                <li class="nav-item  ">
-                    <a href="<?php echo site_url('admin/encashment/payouts'); ?>" class="nav-link ">
-                        <i class="icon-list"></i>
-                        <span class="title">Encashment Payouts</span>
+                        <span class="title">Encashment</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="<?php echo site_url('admin/rewards'); ?>" class="nav-link ">
                         <i class="icon-basket"></i>
-                        <span class="title">Rewards Request</span>
+                        <span class="title">Rewards</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="<?php echo site_url('admin/reseller'); ?>" class="nav-link ">
+                        <i class="icon-basket"></i>
+                        <span class="title">Reseller Voucher</span>
+                    </a>
+                </li>                              
+            </ul>
+        </li>
+        <li class="nav-item  <?php echo ($this->uri->uri_string() == 'admin/encashment/payouts' || $this->uri->uri_string() == 'admin/rewards/claims' || $this->uri->uri_string() == 'admin/reseller/payouts' ? 'start active open' : ''); ?>">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="icon-book-open"></i>
+                <span class="title">Claim History</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+            <ul class="sub-menu">
+                <li class="nav-item  ">
+                    <a href="<?php echo site_url('admin/encashment/payouts'); ?>" class="nav-link ">
+                        <i class="icon-list"></i>
+                        <span class="title">Encashment</span>
                     </a>
                 </li>
                 <li class="nav-item  ">
                     <a href="<?php echo site_url('admin/rewards/claims'); ?>" class="nav-link ">
                         <i class="icon-list"></i>
-                        <span class="title">Rewards Claims</span>
+                        <span class="title">Rewards</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="<?php echo site_url('admin/reseller/payouts'); ?>" class="nav-link ">
+                        <i class="icon-list"></i>
+                        <span class="title">Reseller Voucher</span>
+                    </a>
+                </li>                                
             </ul>
-        </li>
+        </li>        
         <li class="nav-item  <?php echo ($this->uri->uri_string() == 'admin/leadership' ? 'start active open' : ''); ?>">
             <a href="<?php echo site_url('admin/leadership'); ?>" class="nav-link nav-toggle">
                 <i class="icon-badge"></i>

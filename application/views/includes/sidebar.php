@@ -114,6 +114,12 @@
                                 <span class="title">Leadership History</span>
                             </a>
                         </li> 
+                        <li class="nav-item start ">
+                            <a href="<?php echo site_url('transactions/reseller-voucher-request-history'); ?>" class="nav-link ">
+                                <i class="icon-notebook"></i>
+                                <span class="title">Reseller Voucher History</span>
+                            </a>
+                        </li>                        
                     </ul>                    
                 </li>                
                 <li class="nav-item">
@@ -146,7 +152,7 @@
                                 <i class="icon-present"></i>
                                 <span class="title">Reward History</span>
                             </a>
-                        </li>
+                        </li>                     
                     </ul>                    
                 </li>
                 <li class="nav-item">

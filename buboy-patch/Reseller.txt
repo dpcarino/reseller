@@ -1,0 +1,1291 @@
+##CREATE reseller table
+CREATE TABLE `reseller` (
+  `reseller_count_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `head_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `reseller_direct_count` int(10) unsigned NOT NULL DEFAULT '0',
+  `reseller_referrall_bonus` decimal(10,2) unsigned NOT NULL DEFAULT '0.00',
+  `reseller_l_count` int(10) unsigned NOT NULL DEFAULT '0',
+  `reseller_r_count` int(10) unsigned NOT NULL DEFAULT '0',
+  `is_reseller` int(1) unsigned NOT NULL DEFAULT '0',
+  `gc_available` int(1) unsigned NOT NULL DEFAULT '0',  
+  `gold_updated` int(1) unsigned NOT NULL DEFAULT '0',
+  `gold_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `reseller_ar` varchar(45) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`reseller_count_id`),
+  UNIQUE KEY `head_id_UNIQUE` (`head_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+
+
+##INSERT ALL heads to reseller
+INSERT INTO reseller (head_id) 
+SELECT head_id FROM heads;
+
+
+
+## ADD settings
+INSERT INTO `essensan_ge`.`settings_elite` (`name`, `datecreate`, `status`, `value`) VALUES ('ResellerDirectRef', '0000-00-00 00:00:00', '0', '400');
+
+
+
+
+## CREATE ResellerAddSponsor
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `ResellerAddSponsor`(IN `SponsorHeadID` INT(11))
+BEGIN
+	DECLARE DirectRef INT;
+	
+    SELECT Value INTO DirectRef FROM settings_elite where name = 'ResellerDirectRef';
+    
+	UPDATE reseller SET reseller_direct_count = reseller_direct_count + 1,
+		reseller_referrall_bonus = reseller_referrall_bonus + DirectRef
+		WHERE head_id=SponsorHeadID; 
+END
+
+
+
+
+
+## CREATE ResellerAwardGSC
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `ResellerAwardGSC`(IN `NewHeadID` INT(11))
+BEGIN
+
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    
+    
+    SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = NewHeadID;
+	
+    
+    WHILE Awardee <> '0' DO
+		IF Position = 'L' THEN
+			UPDATE reseller 
+            SET reseller_l_count = reseller_l_count + 1
+            WHERE head_id = Awardee;
+		ELSEIF Position = 'R' THEN
+			UPDATE reseller 
+            SET reseller_r_count = reseller_r_count + 1
+			WHERE head_id = Awardee;
+		END IF;
+        
+	SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee;
+ 
+	END WHILE; 
+
+END
+
+
+
+
+## UPDATE GoldAwardGSC
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `GoldAwardGSC`(IN `NewHeadID` INT(11))
+BEGIN
+
+	DECLARE GSCPoints INT;
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    DECLARE IsReseller INT;
+    
+	SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';    
+    SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = NewHeadID;
+	
+    WHILE Awardee <> '0' DO
+		SELECT is_reseller INTO IsReseller FROM reseller WHERE head_id = Awardee;
+        IF IsReseller = 0 THEN
+			IF Position = 'L' THEN
+				UPDATE gold_count	 
+					SET paid_l_count = paid_l_count + 1 ,
+						lgsp = lgsp + GSCPoints
+				WHERE head_id = Awardee;   
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count
+					SET paid_r_count = paid_r_count + 1,
+						rgsp = rgsp + GSCPoints
+				WHERE head_id = Awardee;  
+			END IF;
+		ELSE
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 			
+				WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count                
+				SET paid_r_count = paid_r_count + 1
+				WHERE head_id = Awardee;  
+				
+			END IF;
+		END IF;
+
+        SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee;
+ 
+	END WHILE; 
+
+END
+
+
+
+
+## UPDATE ProcessWeeklyIncome 
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `ProcessWeeklyIncome`(IN `vcTransactionID` VARCHAR(45))
+BEGIN
+	DECLARE GSCPoints INT; 
+    DECLARE PairingAmount INT;
+    DECLARE MaxGSC INT;
+    DECLARE FlushOutStatus INT;
+    DECLARE CDDeductionPercent INT;
+    
+    SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';
+	SELECT Value INTO PairingAmount FROM settings_elite where name = 'GoldPairingBonus';
+    SELECT Value INTO FlushOutStatus FROM settings_elite where name = 'FlushOut';
+    SELECT Value INTO CDDeductionPercent FROM settings_elite where name = 'CD_deduction_percentage';
+    SELECT MAX(points_to_earn) INTO MaxGSC FROM weekly_gsc_chart;    
+       
+	UPDATE gold_count SET lgsp = 100, rgsp = 100
+	WHERE head_id IN 
+	(
+		'2162',
+		'2163',
+		'2164',
+		'2165',
+		'2166',
+		'2167',
+		'2168',
+		'2169',
+		'2170',
+		'2171',
+		'2172',
+		'2173',
+		'2174',
+		'2175',
+		'2176'
+	);
+
+    IF FlushOutStatus = 1 THEN
+    
+    
+		INSERT INTO gsc_history(transaction_id, head_id,
+        lgsc, rgsc, 
+        direct_referral_bonus,
+        gsc_income,
+        weekly_star,
+        cd_balance,
+        date_processed,
+        cd_l_count,
+        cd_r_count,
+        paid_l_count,
+        paid_r_count)
+		(
+			SELECT vcTransactionID, h.head_id, 
+            g.lgsp, g.rgsp, 
+            (g.direct_referrall_bonus + r.reseller_referrall_bonus),
+			(SELECT  IFNULL( MAX(points_to_earn), 0 ) FROM weekly_gsc_chart
+				WHERE points_to_earn <= g.lgsp
+				AND points_to_earn <= g.rgsp) / GSCPoints * PairingAmount,
+			( IF( (g.lgsp >= MaxGSC AND g.rgsp >= MaxGSC), 1, 0) ),
+            h.cd_balance,
+            NOW(),
+            g.cd_l_count, 
+            g.cd_r_count, 
+            g.paid_l_count, 
+            g.paid_r_count
+            FROM heads h
+			JOIN gold_count g ON (g.head_id = h.head_id)
+            JOIN reseller r ON (r.head_id = h.head_id)
+		);
+    
+    
+        UPDATE heads h
+			JOIN gold_count c ON (c.head_id = h.head_id)
+			JOIN gsc_history i ON (i.head_id = h.head_id)
+            JOIN reseller r ON (r.head_id = h.head_id)
+		SET 
+			c.stars = c.stars + i.weekly_star,
+			h.total_income = h.total_income + IF(h.account_status = 1,
+				(i.gsc_income + i.direct_referral_bonus),
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					((i.gsc_income + i.direct_referral_bonus) - h.cd_balance), 
+					((i.gsc_income + i.direct_referral_bonus) * ((100 - CDDeductionPercent) / 100))    
+					))
+                ),
+            c.direct_referrall_bonus =  0,
+            r.reseller_referrall_bonus = 0,
+			c.lgsp = IF((i.lgsc >= MaxGSC AND i.rgsc >= MaxGSC),
+				0, ## c.lgsc - LEAST( i.lgsp, i.rgsp ),
+				c. lgsp - (SELECT IFNULL(MAX(points_to_earn),0) FROM weekly_gsc_chart
+							WHERE points_to_earn <= i.lgsc
+                            AND points_to_earn <= i.rgsc))
+				,
+			c.rgsp = IF((i.lgsc >= MaxGSC AND i.rgsc >= MaxGSC),
+				0, ## c.rgsc - LEAST( i.lgsp, i.rgsp ),
+				c. rgsp - (SELECT IFNULL(MAX(points_to_earn),0) FROM weekly_gsc_chart
+							WHERE points_to_earn <= i.lgsc
+                            AND points_to_earn <= i.rgsc))
+				,
+			i.cd_deduction =  IF( h.account_status = 1,
+				0 ,
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					h.cd_balance, 
+					((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))    
+					))
+                ),
+			h.cd_balance = h.cd_balance - IF( h.account_status = 1,
+				0 ,
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					h.cd_balance, 
+					((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))    
+					))
+                ),
+			h.total_direct_bonus = h.total_direct_bonus + i.direct_referral_bonus,
+            h.total_gsc_bonus = h.total_gsc_bonus + i.gsc_income
+		 WHERE i.transaction_id = vcTransactionID;
+    ELSE
+    
+    
+		INSERT INTO gsc_history(transaction_id, head_id,
+        lgsc, rgsc,
+        direct_referral_bonus,
+        gsc_income, 
+        weekly_star, 
+        cd_balance,        
+        date_processed,
+        cd_l_count,
+        cd_r_count,
+        paid_l_count,
+        paid_r_count)
+		(
+			SELECT vcTransactionID, h.head_id,
+            g.lgsp, g.rgsp,
+            g.direct_referrall_bonus,
+            IF( (lgsp >= MaxGSC AND rgsp >= MaxGSC),
+				( LEAST( g.lgsp,g.rgsp ) / GSCPoints * PairingAmount),
+				( SELECT IFNULL( MAX(points_to_earn),0 ) FROM weekly_gsc_chart
+					WHERE points_to_earn <= g.lgsp
+					AND points_to_earn <= g.rgsp) / GSCPoints * PairingAmount),
+			( LEAST( lgsp,rgsp ) div MaxGSC ), 
+            h.cd_balance,            
+            NOW(),
+            g.cd_l_count, 
+            g.cd_r_count, 
+            g.paid_l_count, 
+            g.paid_r_count
+			FROM heads h
+			JOIN gold_count g ON (g.head_id = h.head_id)
+		);
+       
+       
+		UPDATE heads h
+			JOIN gold_count c ON (c.head_id = h.head_id)
+			JOIN gsc_history i ON (i.head_id = h.head_id)
+		SET 
+			c.stars = c.stars + i.weekly_star,
+			h.total_income = h.total_income + IF(h.account_status = 1,
+				(i.gsc_income + i.direct_referral_bonus),
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					((i.gsc_income + i.direct_referral_bonus) - h.cd_balance), 
+					((i.gsc_income + i.direct_referral_bonus) * ((100 - CDDeductionPercent) / 100))    
+					))
+                ),
+            direct_referrall_bonus = 0,
+			c.lgsp = c.lgsp - 
+				(IF((i.lgsc >= MaxGSC AND i.rgsc >= MaxGSC),
+                    (LEAST(i.lgsc,i.rgsc)),
+					(SELECT IFNULL(MAX(points_to_earn),'0') FROM weekly_gsc_chart
+							WHERE points_to_earn <= i.lgsc
+							AND points_to_earn <= i.rgsc)
+					)
+				),
+			c.rgsp = c.rgsp - 
+				(IF((i.lgsc >= MaxGSC AND i.rgsc >= MaxGSC),
+					(LEAST(i.lgsc,i.rgsc)),
+					(SELECT IFNULL(MAX(points_to_earn),'0') FROM weekly_gsc_chart
+						WHERE points_to_earn <= i.lgsc
+						AND points_to_earn <= i.rgsc)
+					)
+				),
+			i.cd_deduction =  IF( h.account_status = 1,
+				0 ,
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					h.cd_balance, 
+					((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))    
+					))
+                ),
+			h.cd_balance = h.cd_balance - IF( h.account_status = 1,
+				0 ,
+                (IF( ( (((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))	>= h.cd_balance) ), 
+					h.cd_balance, 
+					((i.gsc_income + i.direct_referral_bonus) * (CDDeductionPercent / 100))    
+					))
+                ),
+			h.total_direct_bonus = h.total_direct_bonus + i.direct_referral_bonus,
+            h.total_gsc_bonus = h.total_gsc_bonus + i.gsc_income
+		 WHERE transaction_id = vcTransactionID;
+       
+    END IF;
+    
+    INSERT INTO auto_paid_cd( head_id, transaction_id, process_type)
+    (SELECT head_id, vcTransactionID, 'GSC' FROM heads WHERE cd_balance = 0 AND account_status = 0 ORDER BY head_id);
+    
+    SELECT funcPaidCD( a.head_id ) FROM auto_paid_cd a WHERE a.transaction_id = vcTransactionID 
+    AND process_type = 'GSC';
+    
+    ##CALL WeeklyLeadership(vcTransactionID);
+END
+
+
+
+
+
+
+## UPDATE LeadershipIncome
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `LeadershipIncome`(IN `vcTransactionID` VARCHAR(45))
+BEGIN
+	DECLARE CDDeductionPercent INT;
+    
+	SELECT Value INTO CDDeductionPercent FROM settings_elite where name = 'CD_deduction_percentage';
+
+	INSERT INTO leadership_temp_amount (details_id, transaction_id, 
+    leader_id, sum_income)
+    (
+		SELECT d.details_id, d.transaction_id,
+        d.leader_id, IFNULL(SUM(i.leadership_income), 0) 
+        FROM leadership_details d 
+			LEFT JOIN leadership_history i ON (i.leader_id = d.leader_id)
+		WHERE d.transaction_id = vcTransactionID
+        AND i.transaction_id = vcTransactionID
+		GROUP BY d.leader_id
+	);
+    
+    
+    
+    
+    UPDATE leadership_details l JOIN leadership_temp_amount a ON (a.details_id = l.details_id)
+	SET l.leadership_income = a.sum_income
+	WHERE l.transaction_id = vcTransactionID;
+    
+    
+    
+    
+    UPDATE heads h 
+		JOIN leadership_details l ON (l.leader_id = h.head_id)
+		SET 
+        h.total_leadership_bonus = h.total_leadership_bonus + l.leadership_income,
+		h.total_income = h.total_income + IF(h.account_status = 1, 
+			l.leadership_income,
+			IF((l.leadership_income * (CDDeductionPercent / 100)) > l.cd_balance,
+				l.leadership_income - l.cd_balance,
+				(l.leadership_income * ((100 - CDDeductionPercent) / 100)))),
+		h.cd_balance = h.cd_balance - IF( h.account_status = 1, 
+			0, 
+			IF((l.leadership_income * (CDDeductionPercent / 100)) > l.cd_balance, 
+				l.cd_balance,
+				(l.leadership_income * (CDDeductionPercent / 100)))		
+		),
+        l.cd_deduction = IF( h.account_status = 1, 
+			0,
+            IF((l.leadership_income * (CDDeductionPercent / 100)) > l.cd_balance,
+					l.cd_balance,
+					(l.leadership_income * (CDDeductionPercent / 100) )
+				)
+			)
+	WHERE l.transaction_id = vcTransactionID
+	;
+    
+     INSERT INTO auto_paid_cd( head_id, transaction_id, process_type)
+    (SELECT head_id, vcTransactionID, 'LEADERSHIP' FROM heads WHERE cd_balance = 0 AND account_status = 0 ORDER BY head_id);
+    
+    SELECT funcPaidCD( a.head_id ) FROM auto_paid_cd a WHERE a.transaction_id = vcTransactionID 
+    AND process_type = 'LEADERSHIP';
+END
+
+
+
+## ALTER funcCDPromo 
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcCDPromo`(`PaidHead_id` INT(11)) RETURNS int(11)
+BEGIN
+	DECLARE SponsorHeadID INT;
+	DECLARE DirectRef INT;
+	DECLARE SponsorCount INT;
+	DECLARE KnightStatus INT;
+	DECLARE KnightDateDiff INT;
+	DECLARE MemberDateDiff INT;
+    DECLARE PaidAccount INT;
+    DECLARE CurrentCDBalance DECIMAL(10,2);
+    DECLARE TopProcessed INT;
+    DECLARE IsReseller INT;
+        
+    
+    DECLARE GSCPoints INT;
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    
+    
+    SELECT Value INTO DirectRef FROM settings_elite where name = 'GoldDirectRefferal';
+	SELECT Value INTO KnightDateDiff FROM settings_elite where name = 'KnightDateDiff';
+    SELECT sponsor_id, cd_balance INTO SponsorHeadID, CurrentCDBalance FROM heads WHERE head_id = PaidHead_id;
+    
+        
+    UPDATE heads SET account_status = 1,
+    cd_balance = 0,
+    total_income = total_income + (12888 - CurrentCDBalance)
+    WHERE head_id = PaidHead_id;
+    
+    INSERT INTO cd_payment_history
+	SET head_id = PaidHead_id,
+	date_paid = NOW(),
+	amount = 12888,
+    amount_to_be_paid = CurrentCDBalance,
+	type = 'promo';
+    
+    SELECT MAX(leadership_processed_id) INTO TopProcessed FROM leadership_processed;
+    
+    UPDATE leadership_processed SET total_income = total_income + (12888 - CurrentCDBalance)
+		WHERE leadership_processed_id = TopProcessed;
+    
+    UPDATE gold_count g
+	SET 
+		g.cd_direct_count = g.cd_direct_count - 1,
+		g.paid_direct_count = g.paid_direct_count + 1,
+		g.direct_referrall_bonus = g.direct_referrall_bonus + DirectRef
+	WHERE g.head_id = SponsorHeadID; 
+    
+    
+    
+    SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date ),
+        account_status
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff,
+        PaidAccount
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=SponsorHeadID;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff
+    AND PaidAccount = 1 
+    AND KnightStatus = 0
+    THEN
+		UPDATE heads h
+        SET 		
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = SponsorHeadID; 
+    END IF;
+    
+    ## PAID HEAD
+	SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date )
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=PaidHead_id;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff   
+    THEN
+		UPDATE heads h
+        SET 
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = PaidHead_id; 
+    END IF;
+    
+    
+    SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';
+	SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = PaidHead_id; 
+    
+    
+     WHILE Awardee <> '0' DO
+		SELECT is_reseller INTO IsReseller FROM reseller WHERE head_id = Awardee;
+		IF IsReseller = 0 THEN
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 ,
+				cd_l_count = cd_l_count - 1 ,
+				lgsp = lgsp + GSCPoints
+				WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1,
+				cd_r_count = cd_r_count - 1,
+				rgsp = rgsp + GSCPoints
+				WHERE head_id = Awardee;  
+				
+			END IF;
+		ELSE
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 ,
+				cd_l_count = cd_l_count - 1 
+				WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1,
+				cd_r_count = cd_r_count - 1
+				WHERE head_id = Awardee;  
+				
+			END IF;
+		END IF;
+        SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee; 
+	END WHILE; 
+    
+    
+RETURN 1;
+END
+
+
+
+
+## CREATE funcPaidCD
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcPaidCD`(`PaidHead_id` INT(11)) RETURNS int(11)
+BEGIN
+	DECLARE SponsorHeadID INT;
+	DECLARE DirectRef INT;
+	DECLARE SponsorCount INT;
+	DECLARE KnightStatus INT;
+	DECLARE KnightDateDiff INT;
+	DECLARE MemberDateDiff INT;
+    DECLARE PaidAccount INT;
+    DECLARE CurrentCDBalance DECIMAL(10,2);
+    DECLARE IsReseller INT;
+    
+    DECLARE GoldDirect INT;
+    DECLARE PayliteDirect INT;
+    DECLARE IsPaylite INT;
+        
+    
+    DECLARE GSCPoints INT;
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    
+    
+    SELECT Value INTO GoldDirect FROM settings_elite where name = 'GoldDirectRefferal';
+    SELECT Value INTO PayliteDirect FROM settings_elite where name = 'PayLiteDirectRefComplete';
+	SELECT Value INTO KnightDateDiff FROM settings_elite where name = 'KnightDateDiff';
+    SELECT sponsor_id, cd_balance INTO SponsorHeadID, CurrentCDBalance FROM heads WHERE head_id = PaidHead_id;
+    
+    SELECT is_paylite INTO IsPaylite FROM heads WHERE head_id = PaidHead_id;
+    IF IsPaylite = 1 
+    THEN
+		SET DirectRef = PayliteDirect;
+	ELSE	
+		SET DirectRef = GoldDirect;
+	END IF;
+        
+    UPDATE heads SET account_status = 1,
+    cd_balance = 0
+    WHERE head_id = PaidHead_id;
+    
+    INSERT INTO cd_payment_history
+	SET head_id = PaidHead_id,
+	date_paid = NOW(),
+	amount = CurrentCDBalance,
+    amount_to_be_paid = CurrentCDBalance,
+	type = 'full';
+    
+    
+    UPDATE gold_count g
+	SET 
+		g.cd_direct_count = g.cd_direct_count - 1,
+		g.paid_direct_count = g.paid_direct_count + 1,
+		g.direct_referrall_bonus = g.direct_referrall_bonus + DirectRef
+	WHERE g.head_id = SponsorHeadID; 
+    
+    
+    
+    SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date ),
+        account_status
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff,
+        PaidAccount
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=SponsorHeadID;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff
+    AND PaidAccount = 1 
+    AND KnightStatus = 0
+    THEN
+		UPDATE heads h
+        SET 		
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = SponsorHeadID; 
+    END IF;
+    
+    ## PAID HEAD
+	SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date )
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=PaidHead_id;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff   
+    THEN
+		UPDATE heads h
+        SET 
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = PaidHead_id; 
+    END IF;
+    
+    
+    SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';
+	SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = PaidHead_id; 
+    
+    
+     WHILE Awardee <> '0' DO
+		SELECT is_reseller INTO IsReseller FROM reseller WHERE head_id = Awardee;
+		IF IsReseller = 0 THEN
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 ,
+				cd_l_count = cd_l_count - 1 ,
+				lgsp = lgsp + GSCPoints
+				WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1,
+				cd_r_count = cd_r_count - 1,
+				rgsp = rgsp + GSCPoints
+				WHERE head_id = Awardee;  
+				
+			END IF;
+		ELSE
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 ,
+				cd_l_count = cd_l_count - 1 				
+				WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1,
+				cd_r_count = cd_r_count - 1				
+				WHERE head_id = Awardee;  
+								
+			END IF;
+		END IF;
+        SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee; 
+	END WHILE; 
+RETURN 1;
+END
+
+
+
+## CREATE funcPaidReseller 
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcPaidReseller`(`PaidHead_id` INT(11), `PaidAR` VARCHAR(45)) RETURNS int(11)
+BEGIN
+	DECLARE SponsorHeadID INT;
+	DECLARE DirectRef INT;
+	DECLARE SponsorCount INT;
+	DECLARE KnightStatus INT;
+	DECLARE KnightDateDiff INT;
+	DECLARE MemberDateDiff INT;
+    DECLARE PaidAccount INT;
+    DECLARE CurrentCDBalance DECIMAL(10,2);
+    DECLARE TopProcessed INT;
+    DECLARE IsReseller INT;
+        
+    
+    DECLARE GSCPoints INT;
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    
+    
+    SELECT Value INTO DirectRef FROM settings_elite where name = 'GoldDirectRefferal';
+	SELECT Value INTO KnightDateDiff FROM settings_elite where name = 'KnightDateDiff';
+    SELECT sponsor_id, cd_balance INTO SponsorHeadID, CurrentCDBalance FROM heads WHERE head_id = PaidHead_id;
+    
+        
+    UPDATE heads SET account_status = 1,
+		knight_start_date = NOW()
+    WHERE head_id = PaidHead_id;
+    
+    UPDATE reseller SET is_reseller = 0,
+		gold_updated = 1,
+        gold_date = NOW(),
+        reseller_ar = PaidAR
+    WHERE head_id = PaidHead_id;
+    
+    INSERT INTO cd_payment_history
+	SET head_id = PaidHead_id,
+	date_paid = NOW(),
+	amount = 12888,
+    amount_to_be_paid = CurrentCDBalance,
+	type = 'reseller';
+    
+    
+    
+    UPDATE gold_count g
+	SET 
+		g.paid_direct_count = g.paid_direct_count + 1,
+		g.direct_referrall_bonus = g.direct_referrall_bonus + DirectRef
+	WHERE g.head_id = SponsorHeadID; 
+	
+	UPDATE reseller SET reseller_direct_count = reseller_direct_count - 1
+    WHERE head_id = SponsorHeadID;
+    
+    
+    
+    SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date ),
+        account_status
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff,
+        PaidAccount
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=SponsorHeadID;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff
+    AND PaidAccount = 1 
+    AND KnightStatus = 0
+    THEN
+		UPDATE heads h
+        SET 		
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = SponsorHeadID; 
+    END IF;
+    
+    ## PAID HEAD
+	SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.knight_start_date )
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=PaidHead_id;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff   
+    THEN
+		UPDATE heads h
+        SET 
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = PaidHead_id; 
+    END IF;
+    
+    
+    SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';
+	SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = PaidHead_id; 
+    
+    
+     WHILE Awardee <> '0' DO
+		SELECT is_reseller INTO IsReseller FROM reseller WHERE head_id = Awardee;
+		IF IsReseller = 0 THEN
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 ,				
+				lgsp = lgsp + GSCPoints
+				WHERE head_id = Awardee;   
+                
+                UPDATE reseller 
+                SET reseller_l_count = reseller_l_count - 1 
+                WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1,
+				rgsp = rgsp + GSCPoints
+				WHERE head_id = Awardee;  
+                
+                UPDATE reseller 
+                SET reseller_r_count = reseller_r_count - 1 
+                WHERE head_id = Awardee;   
+				
+			END IF;
+		ELSE
+			IF Position = 'L' THEN
+				UPDATE gold_count 
+				SET paid_l_count = paid_l_count + 1 
+				WHERE head_id = Awardee;   
+                
+                UPDATE reseller 
+                SET reseller_l_count = reseller_l_count - 1 
+                WHERE head_id = Awardee;   
+			  
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count 
+				SET paid_r_count = paid_r_count + 1
+				WHERE head_id = Awardee;  
+                
+                UPDATE reseller 
+                SET reseller_r_count = reseller_r_count - 1 
+                WHERE head_id = Awardee;   
+				
+			END IF;
+		END IF;
+        SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee; 
+	END WHILE; 
+RETURN 1;
+END
+
+
+## CREATE funcGetTransferWallet
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcGetTransferWallet`(`PaidHead_id` INT(11)) RETURNS int(11)
+BEGIN
+	DECLARE retInt INT;
+    DECLARE isReseller INT;
+    DECLARE countReseller INT;
+    SET retInt = 0;
+    
+    SELECT is_reseller INTO isReseller FROM reseller WHERE head_id = PaidHead_id;
+    
+    IF isReseller = 0 THEN
+		SET retInt = 1;
+	ELSE
+		SELECT COUNT(h.head_id) INTO countReseller
+			FROM heads h
+			JOIN reseller r ON (r.head_id = h.head_id)
+            JOIN members m ON (m.member_id = h.member_id)
+			WHERE h.sponsor_id = PaidHead_id
+			AND (r.is_reseller = 1 OR r.gold_updated = 1)
+            AND m.active = 1;
+		IF countReseller >= 4 THEN
+			SET retInt = 1;
+		END IF;
+        
+        SELECT COUNT(h.head_id) INTO countReseller
+			FROM heads h 
+		JOIN reseller r ON (r.head_id = h.head_id)
+        WHERE sponsor_id = PaidHead_id
+        AND r.is_reseller = 0
+        AND h.account_status = 1;
+        
+        IF countReseller >= 1 THEN
+			SET retInt = 1;
+		END IF;
+	END IF; 
+    
+RETURN retInt;
+END
+
+
+
+## CREATE funcGetResellerGC
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcGetResellerGC`(`PaidHead_id` INT(11)) RETURNS int(11)
+BEGIN
+	DECLARE retInt INT;
+    DECLARE isGCavailable INT;
+	DECLARE isReseller INT;
+    DECLARE isGoldUpdated INT;
+    DECLARE isWallet INT;
+    DECLARE countReseller INT;
+    SET retInt = 0;
+    
+    SELECT gc_available, is_reseller, gold_updated 
+		INTO isGCavailable, isReseller, isGoldUpdated
+		FROM reseller WHERE head_id = PaidHead_id;
+    
+    IF isGCavailable = 0 THEN
+		SET retInt = 0;
+	ELSE
+		IF isReseller = 1 THEN
+			SELECT funcGetTransferWallet(PaidHead_id) INTO isWallet;
+            IF isWallet = 1 THEN
+				SET retInt = 1;
+            END IF;
+		END IF;      
+        
+        IF isGoldUpdated = 1 THEN
+			SELECT COUNT(h.head_id) INTO countReseller
+			FROM heads h
+			JOIN reseller r ON (r.head_id = h.head_id)
+            JOIN members m ON (m.member_id = h.member_id)
+			WHERE h.sponsor_id = PaidHead_id
+			AND (r.is_reseller = 1 OR r.gold_updated = 1)
+            AND m.active = 1;
+			IF countReseller >= 4 THEN
+				SET retInt = 1;
+			END IF;
+        END IF;   
+        
+		IF isGoldUpdated = 1 THEN
+			SELECT COUNT(h.head_id) INTO countReseller
+			FROM heads h
+			JOIN reseller r ON (r.head_id = h.head_id)
+			WHERE h.account_status = 1
+			AND created_on < r.gold_date;
+			IF countReseller >= 1 THEN
+				SET retInt = 1;
+			END IF;
+        END IF;
+	END IF;
+RETURN retInt;
+END
+
+
+
+
+
+
+
+## CREATE VIEW wallet_info
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `essensan_ge`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `wallet_info` AS
+    SELECT 
+        `m`.`member_id` AS `member_id`,
+        `m`.`username` AS `username`,
+        `h`.`head_id` AS `head_id`,
+        `h`.`headname` AS `headname`,
+        `h`.`total_income` AS `total_income`,
+        `h`.`status` AS `status`,
+        FUNCGETTRANSFERWALLET(`h`.`head_id`) AS `ActiveWallet`,
+        FUNCGETRESELLERGC(`h`.`head_id`) AS `ActiveResellerGC`
+    FROM
+        (`heads` `h`
+        JOIN `members` `m` ON ((`m`.`member_id` = `h`.`member_id`)))
+		
+		
+
+
+		
+		
+		
+		
+#CREATE TABLE reseller_claims
+CREATE TABLE `reseller_claims` (
+  `reseller_claims_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `trackingcode` varchar(100) DEFAULT NULL,
+  `daterequested` datetime DEFAULT '0000-00-00 00:00:00',
+  `dateprocessed` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `member_id` bigint(20) unsigned NOT NULL,
+  `head_id` bigint(20) unsigned NOT NULL,
+  `claim_status` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '0 - pending, 1-processed',
+  `ip_address` varchar(100) NOT NULL,
+  PRIMARY KEY (`reseller_claims_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
+
+
+## UPDATE VIEW memberhead_info
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `essensan_ge`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `memberhead_info` AS
+    SELECT 
+        `h`.`head_id` AS `head_id`,
+        `h`.`headname` AS `headname`,
+        `h`.`knight_status` AS `knight_status`,
+        `h`.`knight_start_date` AS `knight_start_date`,
+        `h`.`total_income` AS `total_income`,
+        `h`.`cd_balance` AS `cd_balance`,
+        `h`.`total_gsc_bonus` AS `total_gsc_bonus`,
+        `h`.`total_direct_bonus` AS `total_direct_bonus`,
+        `h`.`total_leadership_bonus` AS `total_leadership_bonus`,
+        `g`.`paid_direct_count` AS `paid_direct_count`,
+        `g`.`cd_direct_count` AS `cd_direct_count`,
+        `g`.`direct_referrall_bonus` AS `direct_referrall_bonus`,
+        `g`.`paid_l_count` AS `paid_l_count`,
+        `g`.`paid_r_count` AS `paid_r_count`,
+        `g`.`lgsp` AS `lgsp`,
+        `g`.`rgsp` AS `rgsp`,
+        `g`.`cd_l_count` AS `cd_l_count`,
+        `g`.`cd_r_count` AS `cd_r_count`,
+        `g`.`stars` AS `stars`,
+        `r`.`reseller_direct_count` AS `reseller_direct_count`,
+        `r`.`reseller_referrall_bonus` AS `reseller_referrall_bonus`,
+        `r`.`reseller_l_count` AS `reseller_l_count`,
+        `r`.`reseller_r_count` AS `reseller_r_count`,
+		`r`.`is_reseller` AS `is_reseller`,
+        ((`h`.`total_gsc_bonus` + `h`.`total_direct_bonus`) + `h`.`total_leadership_bonus`) AS `sum_income`,
+        IFNULL((SELECT 
+                        `weekly_gsc_chart`.`postion`
+                    FROM
+                        `weekly_gsc_chart`
+                    WHERE
+                        ((`weekly_gsc_chart`.`points_to_earn` <= `g`.`lgsp`)
+                            AND (`weekly_gsc_chart`.`points_to_earn` <= `g`.`rgsp`))
+                    ORDER BY `weekly_gsc_chart`.`gsc_chart_id` DESC
+                    LIMIT 1),
+                '-') AS `position`,
+        IFNULL((SELECT 
+                        `weekly_gsc_chart`.`weekly_income`
+                    FROM
+                        `weekly_gsc_chart`
+                    WHERE
+                        ((`weekly_gsc_chart`.`points_to_earn` <= `g`.`lgsp`)
+                            AND (`weekly_gsc_chart`.`points_to_earn` <= `g`.`rgsp`))
+                    ORDER BY `weekly_gsc_chart`.`gsc_chart_id` DESC
+                    LIMIT 1),
+                '0') AS `weekly_income`
+    FROM
+        ((`heads` `h`
+        JOIN `gold_count` `g` ON ((`g`.`head_id` = `h`.`head_id`)))
+        JOIN `reseller` `r` ON ((`r`.`head_id` = `h`.`head_id`)))
+
+
+
+
+## CREATE view leaderboards
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `essensan_ge`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW ` ` AS
+    SELECT 
+        `g`.`head_id` AS `head_id`,
+        IFNULL((SELECT 
+                        `weekly_gsc_chart`.`postion`
+                    FROM
+                        `weekly_gsc_chart`
+                    WHERE
+                        ((`weekly_gsc_chart`.`points_to_earn` <= `g`.`lgsp`)
+                            AND (`weekly_gsc_chart`.`points_to_earn` <= `g`.`rgsp`))
+                    ORDER BY `weekly_gsc_chart`.`gsc_chart_id` DESC
+                    LIMIT 1),
+                '0') AS `ranking`,
+        `d`.`authorized_id_img_1` AS `authorized_id_img_1`,
+        IFNULL((SELECT 
+                        `weekly_gsc_chart`.`gsc_chart_id`
+                    FROM
+                        `weekly_gsc_chart`
+                    WHERE
+                        ((`weekly_gsc_chart`.`points_to_earn` <= `g`.`lgsp`)
+                            AND (`weekly_gsc_chart`.`points_to_earn` <= `g`.`rgsp`))
+                    ORDER BY `weekly_gsc_chart`.`gsc_chart_id` DESC
+                    LIMIT 1),
+                '0') AS `weekly_id`,
+        `h`.`headname` AS `headname`,
+        CONCAT(SUBSTR(`d`.`first_name`, 1, 1),
+                LOWER(SUBSTR(`d`.`first_name`, 2)),
+                ' ',
+                `d`.`last_name`) AS `fullname`
+    FROM
+        (((`heads` `h`
+        JOIN `gold_count` `g` ON ((`h`.`head_id` = `g`.`head_id`)))
+        JOIN `members` `m` ON ((`m`.`member_id` = `h`.`member_id`)))
+        JOIN `members_detail` `d` ON ((`d`.`member_id` = `m`.`member_id`)))
+    WHERE
+        (`m`.`is_corpo` = 0)
+    HAVING (`weekly_id` >= 3)
+    ORDER BY `weekly_id` DESC
+    LIMIT 4
+
+
+##INSERT packages
+INSERT INTO `essensan_ge`.`packages` (`package_name`, `package_prefix`, `datecreated`, `is_cd`, `cd_value`, `status`) VALUES ('Reseller', 'RS', '2019-04-27 17:48:05', '0', '0', '0');
+
+
+
+
+##CREATE funcGetWalletMessage
+CREATE DEFINER=`essensan_ge`@`localhost` FUNCTION `funcGetWalletMessage`(`PaidHead_id` INT(11)) RETURNS varchar(250) CHARSET latin1
+BEGIN
+	DECLARE retVarchar VARCHAR(250);
+    DECLARE CountReseller INT;
+    DECLARE isReseller INT;
+    
+    SELECT is_reseller INTO isReseller FROM reseller WHERE head_id = PaidHead_id;
+    
+	IF isReseller = 0 THEN
+		SET retVarchar = '';
+	ELSE
+		SELECT COUNT(h.head_id)
+			INTO CountReseller
+		FROM heads h
+		JOIN reseller r ON r.head_id = h.head_id
+		JOIN members m ON m.member_id = h.member_id
+		WHERE h.sponsor_id = PaidHead_id
+		AND h.account_status = 1
+		AND r.is_reseller = 1
+		AND m.active = 1;
+        
+        IF CountReseller >= 4 THEN
+			SET retVarchar = '';
+		ELSE
+			SELECT CONCAT(4 - COUNT(h.head_id),' active direct resellers or 1 gold elite direct to encash')
+			INTO retVarchar
+			FROM heads h
+			JOIN reseller r ON r.head_id = h.head_id
+			JOIN members m ON m.member_id = h.member_id
+			WHERE h.sponsor_id = PaidHead_id
+			AND h.account_status = 1
+			AND r.is_reseller = 1
+			AND m.active = 1;
+        END IF;
+		
+        SELECT COUNT(h.head_id) INTO countReseller
+			FROM heads h 
+		JOIN reseller r ON (r.head_id = h.head_id)
+        WHERE sponsor_id = PaidHead_id
+        AND r.is_reseller = 0
+        AND h.account_status = 1;
+        
+        IF countReseller >= 1 THEN
+			SET retVarchar = '';
+		END IF;
+    END IF; 
+RETURN retVarchar;
+END
+
+
+
+
+## ALTER VIEW wallet_info
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `essensan_ge`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `wallet_info` AS
+    SELECT 
+        `m`.`member_id` AS `member_id`,
+        `m`.`username` AS `username`,
+        `h`.`head_id` AS `head_id`,
+        `h`.`headname` AS `headname`,
+        `h`.`total_income` AS `total_income`,
+        `h`.`status` AS `status`,
+        FUNCGETTRANSFERWALLET(`h`.`head_id`) AS `ActiveWallet`,
+        FUNCGETRESELLERGC(`h`.`head_id`) AS `ActiveResellerGC`,
+        FUNCGETWALLETMESSAGE(`h`.`head_id`) AS `ResellerMessage`
+    FROM
+        (`heads` `h`
+        JOIN `members` `m` ON ((`m`.`member_id` = `h`.`member_id`)))
+		
+		
+		
+		
+		
+		
+## 		CREATE reseller_payouts
+CREATE TABLE `reseller_payouts` (
+  `payout_id` bigint(11) unsigned NOT NULL,
+  `trackingcode` varchar(100) NOT NULL DEFAULT '0',
+  `total_voucher_amount` decimal(9,2) NOT NULL DEFAULT '0.00',
+  `total_requests` int(10) NOT NULL DEFAULT '0',
+  `processedby` bigint(11) unsigned NOT NULL DEFAULT '0',
+  `dateprocessed` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `status` tinyint(1) unsigned NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
+
+
+
+
+## UPDATE PayLiteCompletePayment
+CREATE DEFINER=`essensan_ge`@`localhost` PROCEDURE `PayLiteCompletePayment`(`PaidHead_id` INT(11))
+BEGIN
+
+	DECLARE SponsorHeadID INT;
+	DECLARE DirectRef INT;
+	DECLARE SponsorCount INT;
+	DECLARE KnightStatus INT;
+	DECLARE KnightDateDiff INT;
+	DECLARE MemberDateDiff INT;
+    DECLARE PaidAccount INT;
+    DECLARE CurrentCDBalance DECIMAL(10,2);
+	DECLARE IsReseller INT;
+        
+    
+    DECLARE GSCPoints INT;
+	DECLARE Awardee VARCHAR(255) DEFAULT '';
+	DECLARE Position VARCHAR(2);
+    
+    
+    SELECT Value INTO DirectRef FROM settings_elite where name = 'PayLiteDirectRefComplete';
+	SELECT Value INTO KnightDateDiff FROM settings_elite where name = 'KnightDateDiff';
+    SELECT sponsor_id, cd_balance INTO SponsorHeadID, CurrentCDBalance FROM heads WHERE head_id = PaidHead_id;
+        
+    UPDATE gold_count g
+	SET 
+		g.cd_direct_count = g.cd_direct_count - 1,
+		g.paid_direct_count = g.paid_direct_count + 1,
+		g.direct_referrall_bonus = g.direct_referrall_bonus + DirectRef
+	WHERE g.head_id = SponsorHeadID; 
+    
+    
+    
+    SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.created_on ),
+        account_status
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff,
+        PaidAccount
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=SponsorHeadID;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff
+    AND PaidAccount = 1 
+    THEN
+		UPDATE heads h
+        SET 		
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = SponsorHeadID; 
+    END IF;
+    
+    ## PAID HEAD
+	SELECT g.paid_direct_count, 
+		h.knight_status,  
+        DATEDIFF( NOW(), h.created_on )
+	INTO SponsorCount, 
+		KnightStatus, 
+        MemberDateDiff
+    FROM heads h JOIN gold_count g ON (h.head_id = g.head_id)
+    WHERE h.head_id=PaidHead_id;
+    
+    IF SponsorCount > 1 AND KnightStatus = 0 
+	AND MemberDateDiff <= KnightDateDiff   
+    THEN
+		UPDATE heads h
+        SET 
+			h.knight_status = 1,
+            h.knight_date = NOW()
+		WHERE h.head_id = PaidHead_id; 
+    END IF;
+    
+    
+    SELECT Value INTO GSCPoints FROM settings_elite where name = 'GoldGSCPoints';
+	SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = PaidHead_id; 
+    
+    
+     WHILE Awardee <> '0' DO
+		SELECT is_reseller INTO IsReseller FROM reseller WHERE head_id = Awardee;
+        IF IsReseller = 0 THEN
+			IF Position = 'L' THEN
+				UPDATE gold_count	 
+					SET paid_l_count = paid_l_count + 1 ,
+						lgsp = lgsp + GSCPoints
+				WHERE head_id = Awardee;   
+			ELSEIF Position = 'R' THEN
+				UPDATE gold_count
+					SET paid_r_count = paid_r_count + 1,
+						rgsp = rgsp + GSCPoints
+				WHERE head_id = Awardee;  
+			END IF;		
+		END IF;
+        SELECT upline_id,upline_pos INTO Awardee,Position FROM heads WHERE head_id = Awardee; 
+	END WHILE; 
+END

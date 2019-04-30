@@ -51,12 +51,14 @@
 <script src="<?php echo base_url('assets/global/scripts/datatable.js'); ?>" type="text/javascript"></script>
 <script src="<?php echo base_url('assets/global/plugins/datatables/datatables.min.js'); ?>" type="text/javascript"></script>
 <script src="<?php echo base_url('assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js'); ?>" type="text/javascript"></script>
+<script src="<?php echo base_url('assets/global/plugins/select2/js/select2.full.min.js'); ?>" type="text/javascript"></script>
 <!-- END PAGE LEVEL PLUGINS -->
 <!-- BEGIN THEME GLOBAL SCRIPTS -->
 <script src="<?php echo base_url('assets/global/scripts/app.min.js'); ?>" type="text/javascript"></script>
 <!-- END THEME GLOBAL SCRIPTS -->
 <!-- BEGIN PAGE LEVEL SCRIPTS -->
 <script src="<?php echo base_url('assets/pages/scripts/dashboard.min.js'); ?>" type="text/javascript"></script>
+<script src="<?php echo base_url('assets/pages/scripts/components-select2.min.js'); ?>" type="text/javascript"></script>
 <!-- END PAGE LEVEL SCRIPTS -->
 <!-- BEGIN THEME LAYOUT SCRIPTS -->
 <script src="<?php echo base_url('assets/layouts/layout2/scripts/layout.min.js'); ?>" type="text/javascript"></script>

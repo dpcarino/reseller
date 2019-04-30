@@ -73,10 +73,18 @@ $route['admin/encashment/process']					= 'admin/Encashment/process/';
 $route['admin/encashment/ajax/(:any)']				= 'admin/Encashment/ajax/$1';
 $route['admin/encashment/export-payout/(:any)']		= 'admin/Encashment/export_payout/$1';
 
-$route['admin/rewards']						= 'admin/Claims/index/';
-$route['admin/rewards/claims']				= 'admin/Claims/claims/';
-$route['admin/rewards/ajax/(:any)']			= 'admin/Claims/ajax/$1';
+$route['admin/rewards']								= 'admin/Claims/index/';
+$route['admin/rewards/claims']						= 'admin/Claims/claims/';
+$route['admin/rewards/ajax/(:any)']					= 'admin/Claims/ajax/$1';
 $route['admin/encashment/export-claims/(:any)']		= 'admin/Claims/export_claims/$1';
+
+$route['admin/reseller']							= 'admin/Reseller/index/';
+$route['admin/reseller/payouts']					= 'admin/Reseller/payouts/';
+$route['admin/reseller/details/(:any)']				= 'admin/Reseller/details/$1';
+$route['admin/reseller/process']					= 'admin/Reseller/process/';
+$route['admin/reseller/ajax/(:any)']				= 'admin/Reseller/ajax/$1';
+$route['admin/reseller/export-payout/(:any)']		= 'admin/Reseller/export_payout/$1';
+
 
 $route['admin/settings/encashment-settings']	= 'admin/Settings/settings_encashment/';
 $route['admin/settings/elite-settings']			= 'admin/Settings/settings_elite/';
@@ -172,6 +180,8 @@ $route['codes/transfer']				= 'Codes/transfer/';
 
 $route['transactions/wallet']						= 'Transactions/wallet/';
 $route['transactions/move-to-wallet']				= 'Transactions/move_wallet/';
+$route['transactions/claim-reseller-voucher']		= 'Transactions/claim_reseller_voucher/'; #Buboy April 24, 2019
+$route['transactions/reseller-voucher-request-history']	= 'Transactions/reseller_voucher_request_history/';
 $route['transactions/wallet-history/']				= 'Transactions/wallet_history/';
 $route['transactions/star-wallet']					= 'Transactions/star_wallet/';
 $route['transactions/move-to-star-wallet']			= 'Transactions/move_star_wallet/';

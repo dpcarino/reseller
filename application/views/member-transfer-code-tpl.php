@@ -1,38 +1,30 @@
 <?php include('includes/header.php'); ?>
-<style>
-.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
-.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
-.autocomplete-selected { background: #F0F0F0; }
-.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
-.autocomplete-group { padding: 2px 5px; }
-.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
-</style>
 <?php include("includes/sidebar.php"); ?>
 
 <div class="page-content-wrapper">
-	<!-- BEGIN CONTENT BODY -->
-	<div class="page-content" style="min-height: 1435px;">
-	    <!-- BEGIN PAGE HEADER-->
-	    <h1 class="page-title"> Transfer Code</h1>
-	    <div class="page-bar">
-	        <ul class="page-breadcrumb">
-	            <li>
-	                <i class="icon-home"></i>
-	                <a href="<?php echo site_url('/'); ?>">Home</a>
-	                <i class="fa fa-angle-right"></i>
-	            </li>
+    <!-- BEGIN CONTENT BODY -->
+    <div class="page-content" style="min-height: 1435px;">
+        <!-- BEGIN PAGE HEADER-->
+        <h1 class="page-title"> Transfer Code</h1>
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="icon-home"></i>
+                    <a href="<?php echo site_url('/'); ?>">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
                 <li>
                     <span>Codes</span>
                     <i class="fa fa-angle-right"></i>
                 </li>                
-	            <li>
-	                <span>Transfer</span>
-	            </li>
-	        </ul>
-	    </div>
-	    <!-- END PAGE HEADER-->
-	    <div class="row">
-	        <div class="col-md-12">
+                <li>
+                    <span>Transfer</span>
+                </li>
+            </ul>
+        </div>
+        <!-- END PAGE HEADER-->
+        <div class="row">
+            <div class="col-md-12">
                 <?php include('includes/notes.php'); ?>
                 <div class="portlet box yellow">
                     <div class="portlet-title">
@@ -68,13 +60,19 @@
                                 <div class="form-group">
                                     <label class="col-md-3 control-label" style="text-align: left; width: 15%;">Member Account: </label>
                                     <div class="col-md-9">
-                                        <input type="text" style="width: 50%;" class="form-control" name="member_account" id="member_account" autocomplete="off"> 
+                                        <select name="member_account" class="form-control" id="member_account">
+                                            <option value="">Select Member Account</option>
+                                            <?php foreach($members as $member): ?>
+                                                <option value="<?php echo $member->member_id; ?>"><?php echo $member->username; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>                                        
+                                        <!-- <input type="text" style="width: 50%;" class="form-control" name="member_account" id="member_account" autocomplete="off">  -->
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label" style="text-align: left; width: 15%;">Security Pin: </label>
                                     <div class="col-md-9">
-                                        <input type="password" style="width: 50%;" class="form-control" placeholder="Enter Security Pin" onkeypress="return isNumberKey(event);" name="security_pin" maxlength="6"> 
+                                        <input type="password" class="form-control" placeholder="Enter Security Pin" onkeypress="return isNumberKey(event);" name="security_pin" maxlength="6"> 
                                     </div>
                                 </div>                                
                             </div>                        
@@ -92,15 +90,19 @@
                         <!-- END FORM-->
                     </div>
                 </div>
-	        </div>
-	    </div>
-	</div>
-	<!-- END CONTENT BODY -->
+            </div>
+        </div>
+    </div>
+    <!-- END CONTENT BODY -->
 </div>
 
 <?php include("includes/footer.php"); ?>
 
 <script>
+$( function() {
+    $('#member_account').select2();
+});
+/*    
     var base_url = '<?php echo site_url(); ?>';
     
     members = [
@@ -119,7 +121,7 @@
             $('#member_id').val(suggestion.data)
         }
     });
-/*
+
     $("#confirm-yes").on('click', function (){
         var code_id = $('#code_id').val();
         var member_id = $('#member_id').val();

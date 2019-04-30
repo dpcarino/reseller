@@ -293,7 +293,7 @@ class Encashment extends CI_Controller {
                     $trackingcode = '';
                 }
 
-                $order_by = 'payout_id ASC';
+                $order_by = 'payout_id DESC';
 
                 if (isset($records['order'])) {
                     if ($records['order'][0]['column'] == 1) {

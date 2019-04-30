@@ -115,13 +115,13 @@ class Codes extends CI_Controller {
                         $data['member_pin_info'] = $member_pin_info;
 
                         $this->form_validation->set_rules('security_pin', 'Security Pin', 'trim|required|callback_verify_security_pin');
-                        $this->form_validation->set_rules('member_account', 'Member Account', 'trim|required');
-                        $this->form_validation->set_rules('member_id', 'Member Account', 'trim|required|callback_check_member_id');
+                        $this->form_validation->set_rules('member_account', 'Member Account', 'trim|required|callback_check_member_id');
+                        #$this->form_validation->set_rules('member_id', 'Member Account', 'trim|required|callback_check_member_id');
 
                         if ($this->form_validation->run() == FALSE){
                         
                         }else{
-                            $transfer_member_id = $this->input->post('member_id');
+                            $transfer_member_id = $this->input->post('member_account');
                             $current_member_id = $this->ion_auth_member->get_user_id();
 
                             #validate user that the code is available and own it
@@ -545,7 +545,7 @@ class Codes extends CI_Controller {
 
     public function check_member_id(){
 
-        $member_id = xss_clean($this->input->post('member_id'));
+        $member_id = xss_clean($this->input->post('member_account'));
 
         if ($member_id == 0)
         {

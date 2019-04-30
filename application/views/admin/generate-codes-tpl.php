@@ -139,6 +139,25 @@
 </div>
 
 
+<!--div class="modal fade" id="reseller" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id='reseller-type'>Warning!</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-left" id="reseller-msg"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default blue" data-dismiss="modal" id="reseller-yes">Ok</button>
+      </div>      
+    </div>
+  </div>
+</div-->
+
 <?php include('includes/footer.php'); ?>
 
 
@@ -163,7 +182,8 @@ jQuery(document).ready(function() {
     $('#member_account').autocomplete({
         lookup: members,
         onSelect: function (suggestion) {
-            $('#member_id').val(suggestion.data)
+            $('#member_id').val(suggestion.data);
+            //$('#package').removeAttr("disabled");
         }
     });
 
@@ -174,16 +194,34 @@ jQuery(document).ready(function() {
         $('#confirm').modal('show');
     });
 
+    /* for max 30
+    $('#package').on('change', function() {
+        
+        if(this.value == 9){
+
+            var member_id = $('#member_id').val();
+
+            $.ajax({
+                url: base_url+"admin/codes/ajax/check-member-reseller-code",
+                data:{'member_id' : member_id},
+                success: function(data) {
+                    if(data.status == 'success'){
+
+                        $('#reseller-msg').text(data.msg);
+                        $('#reseller').modal('show');
+                    }
+                },
+                type: 'POST',
+            });
+        }
+
+    });
+    */
+
     $("#confirm-yes").on('click', function (){
         var member_account = $('#member_account').val();
         var code_type = $('#code_type').val();
         var code_quantity = $('#code_quantity').val();
-        
-        // if(code_type == 0){
-        //     var code_str = 'CD';
-        // }else{
-        //     var code_str = 'PAID';
-        // }
 
         App.blockUI({
             message: 'GENERATING '+code_quantity+' ENTRY CODES FOR '+member_account,

@@ -22,6 +22,9 @@ class Admin extends CI_Controller {
 	   $this->load->model('Heads_model');
 	   $this->load->model('User_model');
 	   $this->load->model('Encashment_model');
+	   $this->load->model('Reseller_model');
+
+	   $this->load->model('System_model');
     }
 
 	public function index()
@@ -50,6 +53,14 @@ class Admin extends CI_Controller {
         	$gold_heads = $this->Heads_model->get_gold_heads();
         	$cd_heads = $this->Heads_model->get_cd_heads();
 
+        	$used_reseller_codes = $this->Codes_model->get_all_used_reseller_codes();
+        	$unused_reseller_codes = $this->Codes_model->get_all_unused_reseller_codes();
+        	$reseller_codes = $this->Codes_model->get_all_reseller_codes();        	
+
+        	$voucher_requests = $this->Reseller_model->get_all_reseller_voucher_request();
+
+        	$system_logs = $this->System_model->get_all_system_log();
+
         	$data['heads_count'] = count($heads);
         	$data['members_count'] = count($members);
         	$data['total_codes'] = count($total_codes);
@@ -64,6 +75,20 @@ class Admin extends CI_Controller {
         	$data['used_paylite_codes'] = count($used_paylite_codes);
         	$data['unused_paylite_codes'] = count($unused_paylite_codes);
         	$data['paylite_codes'] = count($paylite_codes);
+
+        	$data['used_reseller_codes'] = count($used_reseller_codes);
+        	$data['unused_reseller_codes'] = count($unused_reseller_codes);
+        	$data['reseller_codes'] = count($reseller_codes);
+
+        	$data['voucher_requests'] = count($voucher_requests);
+
+        	$encashment_settings = $this->System_model->get_settings('encashment');
+
+        	$maintenance_settings = $this->System_model->get_settings('maintenance');
+
+        	$data['encashment_settings'] = $encashment_settings;
+        	$data['maintenance_settings'] = $maintenance_settings;
+        	$data['system_logs'] = count($system_logs);
 
         	$blog_config = $this->config->item('ion_auth_admin');
 

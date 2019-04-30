@@ -271,4 +271,39 @@ class Codes_model extends CI_Model
         $this->db->where('code_id', $code_id);
         $this->db->delete('codes');
     }
+
+    public function get_unused_reseller_codes_by_member($member_id)
+    {
+        $this->db->where('package_id', 9);
+        $this->db->where('purchased_by', $member_id);
+        $this->db->where('status', 0);
+
+        $result = $this->db->get('codes')->result();
+        return $result;
+    }
+
+    public function get_all_reseller_codes()
+    {
+        $this->db->where('package_id', 9);
+        $result = $this->db->get('codes')->result();
+        return $result;
+    }    
+
+    public function get_all_used_reseller_codes()
+    {
+        $this->db->where('package_id', 9);
+        $this->db->where('status', 1);
+
+        $result = $this->db->get('codes')->result();
+        return $result;
+    }
+
+    public function get_all_unused_reseller_codes()
+    {
+        $this->db->where('package_id', 9);
+        $this->db->where('status', 0);
+
+        $result = $this->db->get('codes')->result();
+        return $result;
+    }    
 }

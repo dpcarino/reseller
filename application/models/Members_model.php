@@ -116,6 +116,14 @@ class Members_model extends CI_Model
         $result = $this->db->query($sql)->result();
         return $result;
     }
+	
+	#buboy 2019-04-26
+    #for table codes count
+    public function get_leaderboards(){
+           
+        $result = $this->db->get('leaderboards')->result();
+        return $result;
+    }
 
     public function get_member_heads($member_id){
 

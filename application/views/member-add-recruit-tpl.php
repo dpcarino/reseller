@@ -410,6 +410,8 @@ $( function() {
         dateFormat: 'yy-mm-dd',
         yearRange: "-100:+0",
     });
+
+    $('#upline_placement_position').select2();
 });
 
 $("#package_id").change(function() {

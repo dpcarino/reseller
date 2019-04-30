@@ -21,7 +21,8 @@ class Heads extends CI_Controller {
        $this->load->model('Heads_model');
        $this->load->model('User_model');
        $this->load->model('Members_model');
-	   $this->load->model('Settings_model');
+       $this->load->model('Settings_model');
+	   $this->load->model('Reseller_model');
     }
 
     public function index()
@@ -60,8 +61,10 @@ class Heads extends CI_Controller {
         }else{
 
             $head_info = $this->Heads_model->get_head($head_id);
+            $reseller_info = $this->Reseller_model->get_reseller($head_id);
 
             $data['head_info'] = $head_info;
+            $data['reseller_info'] = $reseller_info;
 
             $this->form_validation->set_rules('status', 'Status', 'required');
 
@@ -236,7 +239,7 @@ class Heads extends CI_Controller {
                 #log action
                 $admin_id = $this->ion_auth_admin->get_user_id();
                    
-                logger('update_promo', $admin_id, 'admin', '%username% successfully updated paylite status of '.$head_info->headname.' with '.$paid_ar);
+                logger('update_paylite', $admin_id, 'admin', '%username% successfully updated paylite status of '.$head_info->headname.' with '.$paid_ar);
 
                 redirect('admin/heads/update-paylite/'.$head_id);               
             }            
@@ -284,7 +287,7 @@ class Heads extends CI_Controller {
                 #log action
                 $admin_id = $this->ion_auth_admin->get_user_id();
                    
-                logger('update_promo', $admin_id, 'admin', '%username% successfully updated knight status of '.$head_info->headname.' with '.$knight_ar);
+                logger('update_knight', $admin_id, 'admin', '%username% successfully updated knight status of '.$head_info->headname.' with '.$knight_ar);
 
                 redirect('admin/heads/search');               
             }            
@@ -293,10 +296,52 @@ class Heads extends CI_Controller {
         }
     }    
 
+    public function update_reseller($head_id){
+        $data = array();
+        
+        if (!$this->ion_auth_admin->logged_in() || $this->session->userdata('user_type') != 'admin')
+        {
+            // redirect them to the login page
+            $this->ion_auth_admin->logout();
+            redirect('admin/login', 'refresh');
+
+        }else{
+
+            $head_info = $this->Heads_model->get_head($head_id);
+
+            $data['head_info'] = $head_info;
+
+            $this->form_validation->set_rules('reseller_ar', 'Reseller AR', 'trim|required');
+
+            if ($this->form_validation->run() == FALSE){
+
+            }else{
+
+                $reseller_ar     = xss_clean($this->input->post('reseller_ar'));
+
+                $this->Reseller_model->execfuncPaidReseller($head_id, $reseller_ar);
+
+                $printed_message['type'] = 'success';
+                $printed_message['message'] = 'Successfully updated reseller status of '.$head_info->headname.' with '.$knight_ar;
+
+                $this->session->set_flashdata('message', $printed_message);         
+
+                #log action
+                $admin_id = $this->ion_auth_admin->get_user_id();
+                   
+                logger('update_reseller', $admin_id, 'admin', '%username% successfully reseller status of '.$head_info->headname.' with '.$knight_ar);
+
+                redirect('admin/heads/search');               
+            }            
+                        
+            $this->load->view('admin/head-update-reseller-tpl', $data);            
+        }
+    } 
+
 	public function ajax($section)
 	{
 		switch ($section) {
-            case 'get_search_result':
+            case 'get_search_result_old':
                 $records = $_REQUEST;
 
                 if (isset($records['filter'])) {
@@ -435,6 +480,116 @@ class Heads extends CI_Controller {
 
                 echo json_encode($records);          
             break;
+
+            case 'get_search_result':
+                $records = $_REQUEST;
+
+                if (isset($records['filter'])) {
+                    
+                    $headname = $records['filter']['both']['headname'];
+                    $member_name = $records['filter']['both']['member_name'];
+                    $account_status = '';
+                    $knight_status = '';
+                    $is_paylite = '';
+                    $paid_ar = '';
+                    $knight_ar = '';
+                    
+                } else {
+
+                    $headname = '';
+                    $member_name = '';
+                    $account_status = '';
+                    $knight_status = '';
+                    $is_paylite = '';
+                    $paid_ar = '';
+                    $knight_ar = '';
+                }
+
+
+                $order_by = 'heads.head_id DESC';
+
+                if (isset($records['order'])) {
+                    if ($records['order'][0]['column'] == 1) {
+                        $order_by = 'headname' . ' ' . $records['order'][0]['dir'];
+                    }
+                }
+
+                $heads = $this->Heads_model->get_search_result($headname, $member_name, $account_status, $knight_status, $is_paylite, $paid_ar, $knight_ar, $order_by);
+
+                $iTotalRecords = count($heads);
+                $iDisplayLength = intval($_REQUEST['length']);
+                $iDisplayLength = $iDisplayLength < 0 ? $iTotalRecords : $iDisplayLength;
+                $iDisplayStart = intval($_REQUEST['start']);
+
+                $sEcho = intval($_REQUEST['draw']);
+
+                $records["data"] = array();
+
+                $end = $iDisplayStart + $iDisplayLength;
+                $end = $end > $iTotalRecords ? $iTotalRecords : $end;
+
+
+                for ($i = $iDisplayStart; $i < $end; $i++) {
+                    $head = $heads;
+
+                    $member_details_info = $this->Members_model->get_member_details($head[$i]->member_id);
+
+                    $reseller_info = $this->Reseller_model->get_reseller($head[$i]->head_id);
+
+                    $action = '';
+
+                    if($reseller_info->is_reseller == 1){
+
+                        $action .= '<a href="'.site_url('admin/heads/update-reseller').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-balance-scale"></i> Update Reseller</a>';
+
+                    }else{
+
+                        if($head[$i]->cd_balance != '0.00'){
+                            
+                            if($head[$i]->is_paylite == 1){
+                                $action .= '<a href="'.site_url('admin/heads/update-paylite').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-balance-scale"></i> Update PayLite</a>';
+
+                            }else{
+                                $action .= '<br><br><a href="'.site_url('admin/heads/update-balance').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-balance-scale"></i> Update CD Balance</a>';
+                                $action .= '<a href="'.site_url('admin/heads/update-promo').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-balance-scale"></i> Update CD Promo</a>';
+                            }
+
+                        }else{
+
+                            $action = '';
+                        }
+
+                        if($head[$i]->knight_status == 0){
+
+                            if($head[$i]->account_status == 0){
+                                $action .= '';
+                            }else{
+                                $action .= '<a href="'.site_url('admin/heads/update-knight').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-balance-scale"></i> Update Knight</a>';
+                            }
+
+                        }
+
+                    }
+
+                    $records["data"][] = array(
+                        $head[$i]->headname,
+                        $member_details_info->first_name.' '.$member_details_info->last_name,
+                        $head[$i]->created_on,
+                        '<a href="'.site_url('admin/heads/detail').'/'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-database"></i> View Details</a>'.$action
+                    );
+                }
+
+                if (isset($_REQUEST["customActionType"]) && $_REQUEST["customActionType"] == "group_action") {
+                    $records["customActionStatus"] = "OK"; // pass custom message(useful for getting status of group actions)
+                    $records["customActionMessage"] = "Group action successfully has been completed. Well done!"; // pass custom message(useful for getting status of group actions)
+                }
+
+                $records["draw"] = $sEcho;
+                $records["recordsTotal"] = $iTotalRecords;
+                $records["recordsFiltered"] = $iTotalRecords;
+
+                echo json_encode($records);          
+            break;            
 		}
 	}
 

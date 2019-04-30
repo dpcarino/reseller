@@ -15,6 +15,7 @@ a,button,code,div,img,input,label,li,p,pre,select,span,svg,table,td,textarea,th,
 .img-rounded{
     border-radius:6px!important
 }
+
 body{
     color:#333;
     padding:0!important;
@@ -1941,8 +1942,8 @@ li [class*=" fa-"].icon-large,li [class*=" glyphicon-"].icon-large,li [class*=" 
 }
 .btn.green:not(.btn-outline){
     color:#FFF;
-    background-color:#d31145;
-    border-color:#d31145
+    background-color:#4BA547;
+    border-color:#4BA547
 }
 .btn.green:not(.btn-outline).focus,.btn.green:not(.btn-outline):focus{
     color:#FFF;
@@ -1963,25 +1964,25 @@ li [class*=" fa-"].icon-large,li [class*=" glyphicon-"].icon-large,li [class*=" 
     background-image:none
 }
 .btn.green:not(.btn-outline).disabled.focus,.btn.green:not(.btn-outline).disabled:focus,.btn.green:not(.btn-outline).disabled:hover,.btn.green:not(.btn-outline)[disabled].focus,.btn.green:not(.btn-outline)[disabled]:focus,.btn.green:not(.btn-outline)[disabled]:hover,fieldset[disabled] .btn.green:not(.btn-outline).focus,fieldset[disabled] .btn.green:not(.btn-outline):focus,fieldset[disabled] .btn.green:not(.btn-outline):hover{
-    background-color:#d31145;
-    border-color:#d31145
+    background-color:#4BA547;
+    border-color:#4BA547
 }
 .btn.green:not(.btn-outline) .badge{
-    color:#d31145;
+    color:#4BA547;
     background-color:#FFF
 }
 .btn.btn-outline.green{
-    border-color:#d31145;
-    color:#d31145;
+    border-color:#4BA547;
+    color:#4BA547;
     background:0 0
 }
 .btn.btn-outline.green.active,.btn.btn-outline.green:active,.btn.btn-outline.green:active:focus,.btn.btn-outline.green:active:hover,.btn.btn-outline.green:focus,.btn.btn-outline.green:hover{
-    border-color:#d31145;
+    border-color:#4BA547;
     color:#FFF;
-    background-color:#d31145
+    background-color:#4BA547
 }
 .btn.green-stripe{
-    border-left:4px solid #d31145!important
+    border-left:4px solid #4BA547!important
 }
 .btn.green-meadow:not(.btn-outline){
     color:#FFF;
@@ -3922,6 +3923,7 @@ li [class*=" fa-"].icon-large,li [class*=" glyphicon-"].icon-large,li [class*=" 
 .btn-circle{
     border-radius:25px!important;
     overflow:hidden
+    
 }
 .btn-circle-right{
     border-radius:0 25px 25px 0!important
@@ -4559,12 +4561,21 @@ td>.mt-checkbox.mt-checkbox-single,td>.mt-radio.mt-radio-single,th>.mt-checkbox.
     margin-bottom:10px
 }
 .static-info .name{
-    font-size:14px
+    font-size:20px
+    
 }
 .static-info .value{
-    font-size:14px;
+    font-size:18px;
     font-weight:600
+
 }
+
+.static-info .value-tag{
+    font-size:25px;
+    font-weight:600
+
+}
+
 .static-info.align-reverse .name,.static-info.align-reverse .value{
     text-align:right
 }
@@ -4892,13 +4903,13 @@ td>.mt-checkbox.mt-checkbox-single,td>.mt-radio.mt-radio-single,th>.mt-checkbox.
     border-color:#5C9BD1
 }
 .form-control.green{
-    border-color:#d31145
+    border-color:#4BA547
 }
 .form-control.green:focus{
     border-color:#e86487
 }
 .form-control.focus-green:focus{
-    border-color:#d31145
+    border-color:#4BA547
 }
 .form-control.green-meadow{
     border-color:#1BBC9B
@@ -6269,7 +6280,7 @@ body[ng-controller] .modal{
 }
 .portlet>.portlet-title>.actions>.btn,.portlet>.portlet-title>.actions>.btn-group>.btn,.portlet>.portlet-title>.actions>.btn-group>.btn.btn-sm,.portlet>.portlet-title>.actions>.btn.btn-sm{
     padding:4px 10px;
-    font-size:13px;
+    font-size:14px;
     line-height:1.5
 }
 .portlet>.portlet-title>.actions>.btn-group>.btn.btn-default,.portlet>.portlet-title>.actions>.btn-group>.btn.btn-sm.btn-default,.portlet>.portlet-title>.actions>.btn.btn-default,.portlet>.portlet-title>.actions>.btn.btn-sm.btn-default{
@@ -7183,7 +7194,7 @@ body[ng-controller] .modal{
     color:#c7ddef
 }
 .portlet.box.green>.portlet-title,.portlet.green,.portlet>.portlet-body.green{
-    background-color:#d31145
+    background-color:#4BA547
 }
 .portlet.box.blue-sharp>.portlet-title>.actions .btn-default>i{
     color:#d3e4f3
@@ -9370,7 +9381,7 @@ body[ng-controller] .modal{
     color:#FFF!important
 }
 .progress-bar.green{
-    background:#d31145!important;
+    background:#4BA547!important;
     color:#FFF!important
 }
 .progress-bar.green-meadow{
@@ -14118,7 +14129,7 @@ body[ng-controller] .modal{
     font-weight:100
 }
 .mt-element-step .step-default .active{
-    background-color:#d31145!important
+    background-color:#4BA547!important
 }
 .mt-element-step .step-default .active .mt-step-number{
     color:#d31145!important
@@ -17645,7 +17656,7 @@ body[ng-controller] .modal{
 .mt-element-card .mt-card-item{
     border:1px solid #e7ecf1;
     position:relative;
-    margin-bottom:30px
+    margin-bottom:5px
 }
 .mt-element-card .mt-card-item .mt-card-avatar{
     margin-bottom:15px
@@ -17685,7 +17696,7 @@ body[ng-controller] .modal{
     color:#F1C40F
 }
 .mt-element-card.mt-card-round .mt-card-item{
-    padding:40px 40px 10px
+    padding:40px 20px 20px
 }
 .mt-element-card.mt-card-round .mt-card-item .mt-card-avatar{
     border-radius:50%!important;
@@ -17701,7 +17712,7 @@ body[ng-controller] .modal{
 }
 .mt-element-overlay .mt-overlay-1{
     width:100%;
-    height:100%;
+    height:110px;
     float:left;
     overflow:hidden;
     position:relative;
@@ -17714,8 +17725,47 @@ body[ng-controller] .modal{
     -webkit-transition:all .4s linear;
     transition:all .4s linear;
     width:100%;
-    height:auto
+    height:auto;
 }
+
+@media screen and (min-width: 375px){
+    .mt-element-overlay .mt-overlay-1 img{
+    display:block;
+    position:relative;
+    -webkit-transition:all .4s linear;
+    transition:all .4s linear;
+    width:100%;
+    height:auto;
+}
+.mt-element-overlay .mt-overlay-1{
+    width:100%;
+    height:280px;
+    float:left;
+    overflow:hidden;
+    position:relative;
+    text-align:center;
+    cursor:default
+}
+}
+@media screen and (min-width: 1920px){
+.mt-element-overlay .mt-overlay-1 img{
+    display:block;
+    position:relative;
+    -webkit-transition:all .4s linear;
+    transition:all .4s linear;
+    width:100%;
+    height:auto;
+}
+.mt-element-overlay .mt-overlay-1{
+    width:100%;
+    height:200px;
+    float:left;
+    overflow:hidden;
+    position:relative;
+    text-align:center;
+    cursor:default
+}
+} 
 .mt-element-overlay .mt-overlay-1 h2{
     text-transform:uppercase;
     color:#fff;
@@ -17767,6 +17817,8 @@ body[ng-controller] .modal{
     -ms-transform:translateZ(0);
     transform:translateZ(0)
 }
+
+/*Leaderboards Img Hover*/
 .mt-element-overlay .mt-overlay-1:hover img{
     -ms-transform:scale(1.2) translateZ(0);
     -webkit-transform:scale(1.2) translateZ(0);

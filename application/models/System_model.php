@@ -13,6 +13,14 @@ class System_model extends CI_Model
         return $this->db->insert_id();
     }
 
+    public function get_all_system_log()
+    {
+        $this->db->order_by('system_log_id', 'desc');
+
+        $result = $this->db->get('system_logs')->result();
+        return $result;
+    } 
+
     public function get_settings($systemkey){
 
         $this->db->where('systemkey', $systemkey);

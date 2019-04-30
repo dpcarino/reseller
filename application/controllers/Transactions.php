@@ -27,6 +27,7 @@ class Transactions extends CI_Controller {
         $this->load->model('System_model');
         $this->load->model('Encashment_model');
         $this->load->model('Leadership_model');
+        $this->load->model('Reseller_model');
     }
 
     public function wallet(){
@@ -284,6 +285,79 @@ class Transactions extends CI_Controller {
                 }
             }
         }
+    }
+	
+	public function claim_reseller_voucher(){
+        $data = array();
+
+        $user = $this->ion_auth_member->user()->row();
+
+        if(isset($user) && $user->blocked == 1){
+            redirect('blocked', 'refresh');
+            exit;
+        }else{
+            $maintenance_settings = $this->System_model->get_settings('maintenance');
+
+            if($maintenance_settings['active'] == 1){
+                redirect('maintenance', 'refresh');
+            }else{
+                if (!$this->ion_auth_member->logged_in() || $this->session->userdata('user_type') != 'member')
+                {
+                    // redirect them to the login page
+                    $this->ion_auth_member->logout();
+                    redirect('login', 'refresh');
+                }else{
+
+                    $member_id = $this->ion_auth_member->get_user_id();
+
+                    $member_details_info = $this->Members_model->get_member_details($member_id);
+                    $memberhead_details_info = $this->Members_model->get_member_details($member_id);
+                    $member_pin_info = $this->Members_model->get_member($member_id);
+
+                    $encashment_settings = $this->System_model->get_settings('encashment');
+
+                    $data['encashment_settings'] = $encashment_settings;
+                    $data['memberhead_details_info'] = $memberhead_details_info;
+                    $data['member_details_info'] = $member_details_info;
+                    $data['member_pin_info'] = $member_pin_info;
+
+                    $this->form_validation->set_rules('security_pin', 'Security Pin', 'trim|required|callback_verify_security_pin');
+
+                    if ($this->form_validation->run() == FALSE){
+                    
+                    }else{
+
+                        $head_id = $this->session->userdata('wallet_head_id');
+
+                        $reseller_request_data['member_id'] = $member_id;
+                        $reseller_request_data['head_id'] = $head_id;
+                        $reseller_request_data['daterequested'] = date('Y-m-d H:i:s');
+                        $reseller_request_data['ip_address'] = $this->input->ip_address();
+
+                        $this->Reseller_model->insert_reseller_request($reseller_request_data);
+
+                        #update reseller
+
+                        $reseller_data['head_id'] = $head_id;
+                        $reseller_data['gc_available'] = 0;
+
+                        $this->Reseller_model->update_reseller($reseller_data);
+
+                        $printed_message['type'] = 'success';
+                        $printed_message['message'] = 'Successfully requested for reseller voucher';
+
+                        $this->session->set_flashdata('message', $printed_message);
+
+                        #log action
+                        logger('request_reseller_voucher', $member_id, 'members', 'User %username% requested reseller voucher for head '.$head_id);
+
+                        redirect('transactions/reseller-voucher-request-history');                        
+                    }
+
+                    $this->load->view('member-reseller-voucher-request-tpl', $data);
+                }
+            }
+        }        
     }
 
     public function move_star_wallet(){
@@ -549,6 +623,27 @@ class Transactions extends CI_Controller {
         }
     }
 
+    public function reseller_voucher_request_history(){
+
+        $data = array();
+
+        $user = $this->ion_auth_member->user()->row();
+
+        if(isset($user) && $user->blocked == 1){
+            redirect('blocked', 'refresh');
+            exit;
+        }else{
+            $maintenance_settings = $this->System_model->get_settings('maintenance');
+
+            if($maintenance_settings['active'] == 1){
+                redirect('maintenance', 'refresh');
+            }else{
+                $this->load->view('member-reseller-voucher-request-history-tpl', $data);
+            }
+        }
+
+    }
+
     public function ajax($section){
 
         switch ($section) {
@@ -796,12 +891,23 @@ class Transactions extends CI_Controller {
 
                 for ($i = $iDisplayStart; $i < $end; $i++) {
                     $head = $heads;
-
+					
+					#Buboy April 27, 2019
+					#reseller conditions
+					$action = '';
                     if($head[$i]->total_income != '0.00'){
-                        $action = '<a href="javascript:;" id="wallet-move-button-'.$i.'" onclick="moveToWallet('.$i.');" data-head_id="'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-exchange"></i> Move To Wallet</a>';
-                    }else{
-                        $action = '';
+                        # buboy April 23, 2019
+                        # added active wallet
+                        if($head[$i]->ActiveWallet == '1'){
+                            $action = '<a href="javascript:;" id="wallet-move-button-'.$i.'" onclick="moveToWallet('.$i.');" data-head_id="'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-exchange"></i> Move To Wallet</a>';
+                        }
                     }
+                    
+                    if($head[$i]->ActiveResellerGC == '1'){
+                        $action = $action. '<a href="javascript:;" id="reseller-gc-release-'.$i.'" onclick="resellerGCRelease('.$i.');" data-head_id="'.$head[$i]->head_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-exchange"></i> Claim Reseller Voucher</a>';
+                    }
+					
+					$action = $action.$head[$i]->ResellerMessage;
 
                     $records["data"][] = array(
                         $head[$i]->headname, $head[$i]->total_income, $action
@@ -1117,6 +1223,107 @@ class Transactions extends CI_Controller {
 
                 echo json_encode($records);          
             break;
+
+            case 'get_reseller_voucher_requests':
+                $records = $_REQUEST;
+
+                $member_id = $this->ion_auth_member->get_user_id();
+
+                $requests = $this->Reseller_model->get_member_reseller_voucher_request_dtable($member_id);
+
+                $iTotalRecords = count($requests);
+                $iDisplayLength = intval($_REQUEST['length']);
+                $iDisplayLength = $iDisplayLength < 0 ? $iTotalRecords : $iDisplayLength;
+                $iDisplayStart = intval($_REQUEST['start']);
+
+                $sEcho = intval($_REQUEST['draw']);
+
+                $records["data"] = array();
+
+                $end = $iDisplayStart + $iDisplayLength;
+                $end = $end > $iTotalRecords ? $iTotalRecords : $end;
+
+
+                for ($i = $iDisplayStart; $i < $end; $i++) {
+                    $request = $requests;
+
+                    if($request[$i]->claim_status == 0){                        
+                        $claim_status = 'PENDING';
+                    }else{
+                        $claim_status = 'PROCESSED';
+                    }
+
+                    $encashment_settings = $this->System_model->get_settings('encashment');
+
+                    if($encashment_settings['active'] == 0){
+                        $action = '<a href="javascript:;" id="cancel-request-button" onclick="cancelRequest();" data-ecash-id="'.$request[$i]->reseller_claims_id.'" class="btn btn-sm btn-circle btn-default btn-editable"><i class="fa fa-remove"></i> Cancel Request</a>';
+                    }else{
+                        $action = '';
+                    }
+
+                    $head_info = $this->Heads_model->get_head($request[$i]->head_id);
+
+                    if($request[$i]->trackingcode != null){
+                        $trackingcode = $request[$i]->trackingcode;
+                    }else{
+                        $trackingcode = 'Tracking Code Not Available';
+                    }
+
+                    $records["data"][] = array(
+                        $trackingcode,
+                        $request[$i]->daterequested,
+                        $request[$i]->dateprocessed,
+                        $head_info->headname,
+                        $claim_status,
+                        $action
+                    );
+                }
+
+                if (isset($_REQUEST["customActionType"]) && $_REQUEST["customActionType"] == "group_action") {
+                    $records["customActionStatus"] = "OK"; // pass custom message(useful for getting status of group actions)
+                    $records["customActionMessage"] = "Group action successfully has been completed. Well done!"; // pass custom message(useful for getting status of group actions)
+                }
+
+                $records["draw"] = $sEcho;
+                $records["recordsTotal"] = $iTotalRecords;
+                $records["recordsFiltered"] = $iTotalRecords;
+
+                echo json_encode($records);             
+            break;
+
+            case 'cancel-reseller-voucher-request':
+                $reseller_claims_id = $this->input->post('reseller_claims_id');
+                $member_id = $this->ion_auth_member->get_user_id();
+
+                #get encashment request info
+                $request_info = $this->Reseller_model->get_reseller_voucher_request($reseller_claims_id);
+
+                if(!empty($request_info)){
+                    
+                    #update reseller
+                    $reseller_data['head_id'] = $request_info->head_id;
+                    $reseller_data['gc_available'] = 1;
+                    
+                    $this->Reseller_model->update_reseller($reseller_data);
+                    
+                    #delete in reseller_claims
+                    $this->Reseller_model->remove_reseller_voucher_request($reseller_claims_id);
+
+                }
+
+                $data['status'] = 'success';
+                $data['msg'] = 'Reseller voucher request cancelled successfully';
+
+                $printed_message['type'] = 'success';
+                $printed_message['message'] = 'Reseller voucher request cancelled successfully';
+
+                $this->session->set_flashdata('message', $printed_message); 
+
+                #log action
+                logger('cancel_reseller_voucher_request', $member_id, 'members', 'User %username% cancelled reseller voucher request');                 
+
+                $this->output->set_content_type('application/json')->set_output(json_encode($data));
+            break;            
         }
     }
 
