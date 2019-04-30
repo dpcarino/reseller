@@ -11,8 +11,8 @@ var App = function() {
 
     var resizeHandlers = [];
 
-    //var base_url = 'http://essensaelite.com/';
-    var base_url = 'http://dev.essensaelite.com';
+    var base_url = 'http://essensaelite.com/';
+    // var base_url = 'http://dev.essensaelite.com';
 
     var assetsPath = base_url+'/assets/';
 

@@ -41,7 +41,7 @@
                                             <tr>
                                                 <td style="width: 50%">Encashment</td>
                                                 <td>
-                                                    <?php echo ($encashment_settings['active'] == 1 ? 'ON' : 'OFF'); ?>
+                                                    <?php echo ($encashment_settings['active'] == 0 ? 'ON' : 'OFF'); ?>
                                                 </td>
                                             </tr>
                                             <tr>

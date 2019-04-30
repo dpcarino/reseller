@@ -51,14 +51,12 @@
 <script src="<?php echo base_url('assets/global/scripts/datatable.js'); ?>" type="text/javascript"></script>
 <script src="<?php echo base_url('assets/global/plugins/datatables/datatables.min.js'); ?>" type="text/javascript"></script>
 <script src="<?php echo base_url('assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js'); ?>" type="text/javascript"></script>
-<script src="<?php echo base_url('assets/global/plugins/select2/js/select2.full.min.js'); ?>" type="text/javascript"></script>
 <!-- END PAGE LEVEL PLUGINS -->
 <!-- BEGIN THEME GLOBAL SCRIPTS -->
 <script src="<?php echo base_url('assets/global/scripts/app.min.js'); ?>" type="text/javascript"></script>
 <!-- END THEME GLOBAL SCRIPTS -->
 <!-- BEGIN PAGE LEVEL SCRIPTS -->
 <script src="<?php echo base_url('assets/pages/scripts/dashboard.min.js'); ?>" type="text/javascript"></script>
-<script src="<?php echo base_url('assets/pages/scripts/components-select2.min.js'); ?>" type="text/javascript"></script>
 <!-- END PAGE LEVEL SCRIPTS -->
 <!-- BEGIN THEME LAYOUT SCRIPTS -->
 <script src="<?php echo base_url('assets/layouts/layout2/scripts/layout.min.js'); ?>" type="text/javascript"></script>
@@ -162,6 +160,8 @@ $('#knight-timer').countdown({until: knight_date, format: 'DHMS', compact: true 
   $memberhead_info = $this->Members_model->get_member_view_info_by_head($head);
   
   $head_info =  $this->Heads_model->get_head($memberhead_info->head_id);
+  
+  $member_info = $this->Members_model->get_member_details($head_info->member_id);
 ?>
 
 <script>
@@ -244,7 +244,7 @@ $(document).ready(function(){
 
   toastr.clear();
 
-  var $toast = toastr['success']('Gold Elite Membership Card Now Available', 'Hi <?php echo ucfirst($memberhead_info->first_name); ?>'); 
+  // var $toast = toastr['success']('Gold Elite Membership Card Now Available', 'Hi <?php echo ucfirst($member_info->first_name); ?>'); 
 
 </script>
 
